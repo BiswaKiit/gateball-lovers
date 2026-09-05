@@ -72,8 +72,32 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 load_dotenv(os.path.join(BASE_DIR, ".env"))
 
-SUPABASE_URL = os.getenv("SUPABASE_URL", "").strip()
-SUPABASE_PUBLISHABLE_KEY = os.getenv("SUPABASE_PUBLISHABLE_KEY", "").strip()
+# ------------------------------------------------------------
+# Supabase configuration
+# Windows: read from .env
+# Android APK: read from supabase_config.json
+# ------------------------------------------------------------
+supabase_config = {}
+
+try:
+    config_path = os.path.join(BASE_DIR, "supabase_config.json")
+
+    if os.path.exists(config_path):
+        with open(config_path, "r", encoding="utf-8") as config_file:
+            supabase_config = json.load(config_file)
+
+except Exception as exc:
+    print("Supabase config file could not be loaded:", exc)
+
+SUPABASE_URL = (
+    os.getenv("SUPABASE_URL", "").strip()
+    or str(supabase_config.get("SUPABASE_URL", "")).strip()
+)
+
+SUPABASE_PUBLISHABLE_KEY = (
+    os.getenv("SUPABASE_PUBLISHABLE_KEY", "").strip()
+    or str(supabase_config.get("SUPABASE_PUBLISHABLE_KEY", "")).strip()
+)
 
 supabase = None
 
