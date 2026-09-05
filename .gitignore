@@ -1,0 +1,17 @@
+.env
+.venv/
+venv/
+__pycache__/
+*.pyc
+build/
+bin/
+.buildozer/
+.gradle/
+.idea/
+*.apk
+*.aab
+*.keystore
+*.jks
+
+test_supabase.py
+~$Role.docx
