@@ -1,0 +1,43 @@
+name: Build Gateball Lovers APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  build-android:
+    name: Build Android APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Create Supabase configuration
+        env:
+          SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          printf '{\n' > supabase_config.json
+          printf '  "SUPABASE_URL": "%s",\n' "$SUPABASE_URL" >> supabase_config.json
+          printf '  "SUPABASE_PUBLISHABLE_KEY": "%s"\n' "$SUPABASE_PUBLISHABLE_KEY" >> supabase_config.json
+          printf '}\n' >> supabase_config.json
+
+      - name: Build with Buildozer
+        uses: ArtemSBulgakov/buildozer-action@v1
+        id: buildozer
+        with:
+          workdir: .
+          buildozer_version: stable
+          command: buildozer android debug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Gateball-Lovers-debug-APK
+          path: ${{ steps.buildozer.outputs.filename }}
