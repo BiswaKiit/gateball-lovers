@@ -73,9 +73,23 @@ jobs:
               json.dump(config, f)
           PY
 
-      - name: Accept Android SDK licenses
+      - name: Prepare Android SDK licenses
         run: |
-          sed -i '/android.permissions =/i android.accept_sdk_license = True' buildozer.spec
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path("buildozer.spec")
+          text = path.read_text(encoding="utf-8")
+
+          if "android.accept_sdk_license" not in text:
+              text = text.replace(
+                  "[app:android]\n",
+                  "[app:android]\n"
+                  "android.accept_sdk_license = True\n"
+              )
+
+          path.write_text(text, encoding="utf-8")
+          PY
 
       - name: Build debug APK
         env:
