@@ -7,7 +7,7 @@ source.dir = .
 source.include_exts = py,png,jpg,jpeg,ico,kv,atlas,json
 source.exclude_dirs = .git,.venv,venv,build,bin,.buildozer,.gradle,.idea
 version = 1.0
-requirements = python3,kivy,python-dotenv,supabase
+requirements = python3,kivy,python-dotenv,supabase,supabase-auth
 orientation = portrait
 fullscreen = 0
 
