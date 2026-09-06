@@ -83,40 +83,13 @@ jobs:
 
           if "android.accept_sdk_license" not in text:
               text = text.replace(
-                  "[app:android]\n",
-                  "[app:android]\n"
+                  "[app]\n",
+                  "[app]\n"
                   "android.accept_sdk_license = True\n"
-              )
-
-          if "p4a.branch" not in text:
-              text = text.replace(
-                  "[app:android]\n",
-                  "[app:android]\n"
-                  "p4a.branch = develop\n"
               )
 
           path.write_text(text, encoding="utf-8")
           PY
-
-      - name: Prepare Android SDK with accepted licenses
-        run: |
-          export ANDROID_HOME="$HOME/.buildozer/android/platform/android-sdk"
-          export ANDROID_SDK_ROOT="$ANDROID_HOME"
-
-          mkdir -p "$ANDROID_HOME/licenses"
-
-          printf '%s\n' \
-            "8933bad161af4178b1185d1a37fbf41ea5269c55" \
-            "d56f5187479451eabf01fb78af6dfcb131a6481e" \
-            "24333f8a63b6825ea9c5514f83c2829b004d1fee" \
-            > "$ANDROID_HOME/licenses/android-sdk-license"
-
-      - name: Download SDK, NDK and prepare python-for-android
-        env:
-          P4A_PREREQUISITES_INSTALL_INTERACTIVE: "0"
-          PYTHONFORANDROID_PREREQUISITES_INSTALL_INTERACTIVE: "0"
-        run: |
-          buildozer android p4a -- --help
 
       - name: Build debug APK
         env:
