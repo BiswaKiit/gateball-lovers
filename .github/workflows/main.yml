@@ -91,12 +91,20 @@ jobs:
           path.write_text(text, encoding="utf-8")
           PY
 
-      - name: Build debug APK
+            - name: Build debug APK
         env:
           P4A_PREREQUISITES_INSTALL_INTERACTIVE: "0"
           PYTHONFORANDROID_PREREQUISITES_INSTALL_INTERACTIVE: "0"
         run: |
-          buildozer -v android debug
+          set -o pipefail
+          buildozer -v android debug 2>&1 | tee build.log
+
+      - name: Show build log
+        if: always()
+        run: |
+          echo "================ FULL BUILD LOG ================"
+          cat build.log
+          echo "================ END BUILD LOG ================="
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
