@@ -1,4 +1,5 @@
 [app]
+p4a.branch = develop
 title = Gateball Lovers
 package.name = gateball_lovers
 package.domain = org.gateballlovers
