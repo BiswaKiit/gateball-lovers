@@ -91,7 +91,7 @@ jobs:
           path.write_text(text, encoding="utf-8")
           PY
 
-            - name: Build debug APK
+      - name: Build debug APK
         env:
           P4A_PREREQUISITES_INSTALL_INTERACTIVE: "0"
           PYTHONFORANDROID_PREREQUISITES_INSTALL_INTERACTIVE: "0"
