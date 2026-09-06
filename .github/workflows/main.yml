@@ -9,6 +9,10 @@ on:
 permissions:
   contents: read
 
+env:
+  P4A_PREREQUISITES_INSTALL_INTERACTIVE: "0"
+  PYTHONFORANDROID_PREREQUISITES_INSTALL_INTERACTIVE: "0"
+
 jobs:
   build-apk:
     name: Build Android APK
@@ -41,6 +45,7 @@ jobs:
             autopoint \
             gettext \
             libtool \
+            libltdl-dev \
             pkg-config \
             zlib1g-dev \
             libncurses5-dev \
@@ -53,7 +58,7 @@ jobs:
       - name: Install Buildozer
         run: |
           python -m pip install --upgrade pip
-          python -m pip install buildozer
+          python -m pip install --upgrade buildozer
 
       - name: Create Supabase configuration
         env:
@@ -88,13 +93,21 @@ jobs:
                   "android.accept_sdk_license = True\n"
               )
 
+          if "p4a.branch" not in text:
+              text = text.replace(
+                  "[app]\n",
+                  "[app]\n"
+                  "p4a.branch = develop\n"
+              )
+
           path.write_text(text, encoding="utf-8")
           PY
 
+      - name: Initialize Android SDK, NDK and p4a
+        run: |
+          buildozer android p4a -- --help
+
       - name: Build debug APK
-        env:
-          P4A_PREREQUISITES_INSTALL_INTERACTIVE: "0"
-          PYTHONFORANDROID_PREREQUISITES_INSTALL_INTERACTIVE: "0"
         run: |
           set -o pipefail
           buildozer -v android debug 2>&1 | tee build.log
@@ -107,6 +120,7 @@ jobs:
           echo "================ END BUILD LOG ================="
 
       - name: Upload APK
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: Gateball-Lovers-debug-APK
