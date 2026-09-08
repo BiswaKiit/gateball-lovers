@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{{ title }} - Gateball Lovers</title>
+<style>
+body{font-family:Arial;background:#fff8e8;margin:0;padding:20px}
+.wrap{max-width:430px;margin:auto}
+.card{background:#fff;border-radius:18px;padding:20px;box-shadow:0 5px 18px rgba(0,0,0,.10)}
+h1{color:#d88900;font-size:23px}
+label{display:block;margin-top:12px;font-weight:bold;color:#555}
+input,select,textarea{width:100%;padding:12px;margin-top:6px;border:1px solid #ddd;border-radius:10px;box-sizing:border-box}
+button,.btn{display:block;width:100%;padding:13px;margin-top:16px;border:0;border-radius:11px;background:#f4a300;color:#fff;font-weight:bold;text-decoration:none;text-align:center;box-sizing:border-box}
+.back{background:#777}
+.msg{margin-top:10px;color:#c62828}
+</style>
+</head>
+<body>
+<div class="wrap"><div class="card">
+<h1>{{ title }}</h1>
+{% with messages=get_flashed_messages() %}
+{% if messages %}<div class="msg">{% for m in messages %}{{ m }}<br>{% endfor %}</div>{% endif %}
+{% endwith %}
+<form method="post">
+{{ form_html|safe }}
+<button type="submit">SAVE</button>
+<a class="btn back" href="{{ url_for('tournaments') }}">BACK TO TOURNAMENTS</a>
+</form>
+</div></div>
+</body>
+</html>

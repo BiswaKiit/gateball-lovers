@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Gateball Lovers - Private Chat</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#eee;font-family:Arial,sans-serif;color:#222}.page{max-width:430px;min-height:100vh;margin:auto;background:#f7f7f7;display:flex;flex-direction:column}.header{height:66px;background:#f4a300;color:#fff;display:flex;align-items:center;gap:9px;padding:8px;position:sticky;top:0;z-index:5}.back{width:48px;height:48px;border:0;border-radius:10px;background:#d88900;color:#fff;font-size:24px;cursor:pointer}.person{display:flex;align-items:center;gap:9px;min-width:0}.avatar{width:44px;height:44px;border-radius:50%;object-fit:cover;background:#fff0c8;border:1px solid #f1d58e;display:flex;align-items:center;justify-content:center;font-size:20px}.name{font-weight:bold;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.meta{font-size:11px;opacity:.9;margin-top:2px}.messages{flex:1;padding:12px;overflow-y:auto;min-height:0}.empty{text-align:center;color:#777;font-size:13px;padding:30px 10px}.bubble-row{display:flex;margin:6px 0}.bubble-row.mine{justify-content:flex-end}.bubble{max-width:82%;padding:9px 11px;border-radius:14px;background:#fff;box-shadow:0 1px 4px #00000012}.mine .bubble{background:#fff0c8}.text{font-size:14px;white-space:pre-wrap;word-break:break-word}.time{font-size:9px;color:#888;margin-top:4px;text-align:right}.composer{background:#fff;border-top:1px solid #ddd;padding:8px;display:flex;gap:7px;position:sticky;bottom:0}.composer textarea{flex:1;resize:none;height:45px;padding:11px;border:1px solid #ccc;border-radius:10px;font-family:Arial;font-size:14px}.send{width:72px;border:0;border-radius:10px;background:#299447;color:#fff;font-weight:bold;cursor:pointer}.send:disabled{opacity:.55}.status{text-align:center;background:#fff;color:#777;font-size:10px;padding:4px}.creator{text-align:center;color:#777;font-size:11px;padding:6px;background:#fff}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="header">
+    <button class="back" onclick="location.href='{{ url_for('chat') }}'">←</button>
+    <div class="person">
+      {% if member.get('photo_url') %}<img class="avatar" src="{{ member.get('photo_url') }}" alt="">{% else %}<div class="avatar">👤</div>{% endif %}
+      <div><div class="name">{{ member.get('full_name') or 'Gateball Member' }}</div><div class="meta">{{ member.get('country') or 'Country not set' }} · Private Chat</div></div>
+    </div>
+  </div>
+  <div id="messages" class="messages"><div class="empty">Loading messages...</div></div>
+  <div id="status" class="status">Connecting...</div>
+  <div class="composer"><textarea id="messageInput" placeholder="Write a message..." maxlength="2000"></textarea><button id="sendBtn" class="send">SEND</button></div>
+  <div class="creator">Created by Biswa Ranjan Mishra</div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SB_URL={{ supabase_url|tojson }}, SB_KEY={{ supabase_publishable_key|tojson }}, TOKEN={{ access_token|tojson }};
+const MY_ID={{ current_user_id|tojson }}, OTHER_ID={{ member.get('id')|tojson }}, OTHER_NAME={{ (member.get('full_name') or 'Member')|tojson }};
+let sb=null, channel=null;
+const box=document.getElementById('messages'), input=document.getElementById('messageInput'), send=document.getElementById('sendBtn'), status=document.getElementById('status');
+function esc(s){return String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
+function fmt(t){try{return new Date(t).toLocaleString([], {day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}catch(e){return ''}}
+function render(rows){
+  if(!rows.length){box.innerHTML='<div class="empty">No messages yet. Say hello! 👋</div>';return;}
+  box.innerHTML=rows.map(m=>{const mine=String(m.sender_id)===String(MY_ID);return `<div class="bubble-row ${mine?'mine':''}"><div class="bubble"><div class="text">${esc(m.message)}</div><div class="time">${mine?'You':esc(OTHER_NAME)} · ${fmt(m.created_at)}</div></div></div>`}).join('');
+  box.scrollTop=box.scrollHeight;
+}
+async function load(){
+  try{
+    const a=await sb.from('direct_messages').select('id,sender_id,receiver_id,message,created_at').eq('sender_id',MY_ID).eq('receiver_id',OTHER_ID).order('created_at',{ascending:true}).limit(500);
+    const b=await sb.from('direct_messages').select('id,sender_id,receiver_id,message,created_at').eq('sender_id',OTHER_ID).eq('receiver_id',MY_ID).order('created_at',{ascending:true}).limit(500);
+    if(a.error)throw a.error;if(b.error)throw b.error;
+    render([...(a.data||[]),...(b.data||[])].sort((x,y)=>new Date(x.created_at)-new Date(y.created_at)));
+    localStorage.setItem('gl_chat_read_'+OTHER_ID,String(Date.now()));
+  }catch(e){console.error(e);box.innerHTML='<div class="empty">Could not load chat. Please check Supabase chat permissions.</div>';status.textContent='Chat load error';}
+}
+async function sendMessage(){
+  const text=input.value.trim();if(!text||send.disabled)return;
+  send.disabled=true;status.textContent='Sending...';
+  try{
+    const {data,error}=await sb.from('direct_messages').insert({sender_id:MY_ID,receiver_id:OTHER_ID,message:text}).select('id,sender_id,receiver_id,message,created_at').single();
+    if(error)throw error; input.value='';
+    const current=Array.from(box.querySelectorAll('.bubble-row')).length;
+    if(current===0)box.innerHTML='';
+    const row=document.createElement('div');row.className='bubble-row mine';row.innerHTML=`<div class="bubble"><div class="text">${esc(data.message)}</div><div class="time">You · ${fmt(data.created_at)}</div></div>`;box.appendChild(row);box.scrollTop=box.scrollHeight;
+    status.textContent='Message sent ✓';
+  }catch(e){console.error(e);status.textContent='Message failed. Check direct_messages permissions.';}
+  finally{send.disabled=false;input.focus();}
+}
+function subscribe(){
+  channel=sb.channel('direct-chat-'+[MY_ID,OTHER_ID].sort().join('-'))
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'direct_messages',filter:'receiver_id=eq.'+MY_ID},payload=>{
+      const m=payload.new||{};if(String(m.sender_id)!==String(OTHER_ID))return;
+      const row=document.createElement('div');row.className='bubble-row';row.innerHTML=`<div class="bubble"><div class="text">${esc(m.message)}</div><div class="time">${esc(OTHER_NAME)} · ${fmt(m.created_at)}</div></div>`;box.appendChild(row);box.scrollTop=box.scrollHeight;localStorage.setItem('gl_chat_read_'+OTHER_ID,String(Date.now()));
+    }).subscribe((state)=>{if(state==='SUBSCRIBED')status.textContent='Realtime connected ✓';});
+}
+async function init(){
+  sb=window.supabase.createClient(SB_URL,SB_KEY,{global:{headers:{Authorization:'Bearer '+TOKEN}}});
+  try{if(TOKEN)sb.realtime.setAuth(TOKEN)}catch(e){console.warn(e)}
+  await load();subscribe();input.focus();
+}
+send.addEventListener('click',sendMessage);input.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage()}});init();
+</script>
+</body>
+</html>

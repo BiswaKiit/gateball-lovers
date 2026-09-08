@@ -1,0 +1,585 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#F4A300">
+    <title>Dashboard - Gateball Lovers</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, Helvetica, sans-serif;
+            background: #fff8e8;
+            color: #222;
+        }
+
+        .app {
+            width: 100%;
+            max-width: 430px;
+            min-height: 100vh;
+            margin: 0 auto;
+            background: #fff8e8;
+            padding-bottom: 80px;
+        }
+
+        .top-header {
+            background: linear-gradient(135deg, #F4A300, #d88900);
+            color: white;
+            padding: 18px 16px 20px;
+            text-align: center;
+        }
+
+        .top-header h1 {
+            margin: 0;
+            font-size: 22px;
+        }
+
+        .top-header p {
+            margin: 4px 0 0;
+            font-size: 12px;
+        }
+
+        .welcome {
+            padding: 15px;
+        }
+
+        .welcome-card {
+            background: white;
+            border-radius: 16px;
+            padding: 15px;
+            box-shadow: 0 3px 12px rgba(0,0,0,.08);
+        }
+
+        .welcome-card h2 {
+            margin: 0;
+            color: #333;
+            font-size: 20px;
+        }
+
+        .role {
+            margin-top: 5px;
+            color: #777;
+            font-size: 13px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            padding: 0 12px;
+        }
+
+        .stat {
+            background: #fff1d2;
+            border-radius: 14px;
+            padding: 12px;
+            text-align: center;
+        }
+
+        .stat-icon {
+            font-size: 22px;
+        }
+
+        .stat-number {
+            font-size: 22px;
+            font-weight: 800;
+            color: #d88900;
+            margin-top: 2px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            margin-top: 2px;
+        }
+
+        .section {
+            margin: 14px 12px 0;
+            background: white;
+            border-radius: 16px;
+            padding: 14px;
+            box-shadow: 0 3px 12px rgba(0,0,0,.08);
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 800;
+            margin-bottom: 12px;
+        }
+
+        .tournament-card {
+            border: 1px solid #eee;
+            border-left: 5px solid #F4A300;
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 10px;
+            background: #fff;
+        }
+
+        .tournament-card:last-child,
+        .news-card:last-child {
+            margin-bottom: 0;
+        }
+
+        .tournament-name {
+            font-size: 16px;
+            font-weight: 800;
+            color: #333;
+        }
+
+        .tournament-info {
+            margin-top: 7px;
+            color: #666;
+            font-size: 12px;
+            line-height: 1.55;
+        }
+
+        .status-badge {
+            display: inline-block;
+            margin-top: 8px;
+            padding: 5px 9px;
+            border-radius: 20px;
+            background: #fff0c7;
+            color: #a96d00;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .live-card {
+            border-left-color: #e31b23;
+        }
+
+        .live-badge {
+            background: #ffe0e0;
+            color: #c62828;
+        }
+
+        .watch-button,
+        .news-button {
+            display: inline-block;
+            margin-top: 9px;
+            padding: 8px 11px;
+            border-radius: 9px;
+            text-decoration: none;
+            font-size: 12px;
+            font-weight: bold;
+            background: #F4A300;
+            color: white;
+        }
+
+        .watch-button {
+            background: #d62828;
+        }
+
+        .news-card {
+            border: 1px solid #eee;
+            border-radius: 12px;
+            padding: 11px;
+            margin-bottom: 9px;
+        }
+
+        .news-source {
+            font-size: 11px;
+            color: #d88900;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .news-title {
+            font-size: 14px;
+            font-weight: 700;
+            line-height: 1.4;
+        }
+
+        .message-card {
+            background: #fffaf0;
+            border-left: 5px solid #F4A300;
+            border-radius: 11px;
+            padding: 12px;
+            margin-bottom: 10px;
+        }
+
+        .section-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .section-head .section-title {
+            margin-bottom: 0;
+        }
+
+        .manage-button {
+            display: inline-block;
+            padding: 7px 9px;
+            border-radius: 8px;
+            text-decoration: none;
+            background: #F4A300;
+            color: white;
+            font-size: 10px;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+
+        .message-actions {
+            display: flex;
+            gap: 7px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+
+        .message-action {
+            display: inline-block;
+            padding: 7px 10px;
+            border-radius: 8px;
+            border: 0;
+            text-decoration: none;
+            font-size: 10px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .edit-message {
+            background: #F4A300;
+            color: white;
+        }
+
+        .delete-message {
+            background: #d62828;
+            color: white;
+        }
+
+        .message-title {
+            font-size: 16px;
+            font-weight: 800;
+        }
+
+        .message-text {
+            margin-top: 7px;
+            color: #555;
+            font-size: 13px;
+            line-height: 1.55;
+            white-space: pre-wrap;
+        }
+
+        .message-date {
+            margin-top: 8px;
+            color: #999;
+            font-size: 10px;
+        }
+
+        .empty {
+            color: #777;
+            font-size: 13px;
+            padding: 5px 0;
+        }
+
+        .error {
+            color: #c62828;
+            font-size: 13px;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px 10px 10px;
+            color: #9b6500;
+            font-size: 12px;
+        }
+
+        .logout {
+            display: block;
+            margin: 8px 15px 0;
+            padding: 12px;
+            text-align: center;
+            border-radius: 11px;
+            background: #777;
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 13px;
+        }
+
+        .bottom-nav {
+            position: fixed;
+            left: 50%;
+            bottom: 0;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 430px;
+            height: 66px;
+            background: white;
+            border-top: 1px solid #ddd;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            z-index: 1000;
+        }
+
+        .bottom-nav a {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            color: #777;
+            font-size: 10px;
+            font-weight: bold;
+            gap: 2px;
+        }
+
+        .bottom-nav a.active {
+            color: #d88900;
+        }
+
+        .nav-icon {
+            font-size: 20px;
+        }
+    </style>
+</head>
+
+<body>
+<div class="app">
+
+    <header class="top-header">
+        <h1>Gateball Lovers</h1>
+        <p>Connect. Compete. Celebrate.</p>
+    </header>
+
+    <div class="welcome">
+        <div class="welcome-card">
+            <h2>Welcome, {{ user_name }}!</h2>
+            <div class="role">Role: {{ user_role }}</div>
+        </div>
+    </div>
+
+    {% with messages=get_flashed_messages() %}
+        {% if messages %}
+            <div style="padding:0 12px;">
+                {% for m in messages %}
+                    <div style="background:#fff1d2;border-left:5px solid #F4A300;border-radius:10px;padding:10px 12px;margin-bottom:8px;font-size:12px;color:#7a5200;">{{ m }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <div class="stats">
+        <div class="stat">
+            <div class="stat-icon">👤</div>
+            <div class="stat-number">{{ players_count }}</div>
+            <div class="stat-label">Players</div>
+        </div>
+
+        <div class="stat">
+            <div class="stat-icon">🧑‍💼</div>
+            <div class="stat-number">{{ organizers_count }}</div>
+            <div class="stat-label">Organizers</div>
+        </div>
+
+        <div class="stat">
+            <div class="stat-icon">🏆</div>
+            <div class="stat-number">{{ tournaments_count }}</div>
+            <div class="stat-label">Tournaments</div>
+        </div>
+
+        <div class="stat">
+            <div class="stat-icon">🔴</div>
+            <div class="stat-number">{{ live_matches_count }}</div>
+            <div class="stat-label">Live Matches</div>
+        </div>
+    </div>
+
+    <!-- UPCOMING TOURNAMENTS -->
+    <section class="section">
+        <div class="section-title">📅 Upcoming Tournaments</div>
+
+        {% if upcoming_tournaments %}
+            {% for t in upcoming_tournaments %}
+                <div class="tournament-card">
+                    <div class="tournament-name">
+                        🏆 {{ t.name }}
+                    </div>
+
+                    <div class="tournament-info">
+                        📅 {{ t.display_start }}{% if t.display_end %} — {{ t.display_end }}{% endif %}
+                        <br>
+                        📍 {{ t.venue or "Venue not specified" }}
+                        {% if t.country %}
+                            <br>🌏 {{ t.country }}
+                        {% endif %}
+                        {% if t.event_type %}
+                            <br>🎯 {{ t.event_type }}
+                        {% endif %}
+                        {% if t.organizer_name %}
+                            <br>🏢 Organized by: {{ t.organizer_name }}
+                        {% endif %}
+                    </div>
+
+                    <span class="status-badge">UPCOMING</span>
+                </div>
+            {% endfor %}
+
+            <a class="news-button" href="{{ url_for('tournaments', status='Upcoming') }}">
+                VIEW ALL TOURNAMENTS →
+            </a>
+        {% else %}
+            <div class="empty">No upcoming tournaments found.</div>
+        {% endif %}
+    </section>
+
+    <!-- LIVE MATCHES -->
+    <section class="section">
+        <div class="section-title">🔴 Live Matches</div>
+
+        {% if live_matches %}
+            {% for t in live_matches %}
+                <div class="tournament-card live-card">
+                    <div class="tournament-name">
+                        🔴 {{ t.name }}
+                    </div>
+
+                    <div class="tournament-info">
+                        📍 {{ t.venue or "Venue not specified" }}
+                        {% if t.country %}
+                            <br>🌏 {{ t.country }}
+                        {% endif %}
+                        {% if t.event_type %}
+                            <br>🎯 {{ t.event_type }}
+                        {% endif %}
+                    </div>
+
+                    <span class="status-badge live-badge">🔴 LIVE NOW</span>
+
+                    {% if t.live_link %}
+                        <br>
+                        <a class="watch-button"
+                           href="{{ t.live_link }}"
+                           target="_blank"
+                           rel="noopener noreferrer">
+                            ▶ WATCH LIVE
+                        </a>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty">No live matches at the moment.</div>
+        {% endif %}
+    </section>
+
+    <!-- GATEBALL NEWS -->
+    <section class="section">
+        <div class="section-title">📰 Gateball News</div>
+
+        {% if news %}
+            {% set headline = news[0] %}
+            <div class="news-card">
+                <div class="news-source">{{ headline.source }}</div>
+                <div class="news-title">{{ headline.title }}</div>
+                <a class="news-button"
+                   href="{{ headline.url }}"
+                   target="_blank"
+                   rel="noopener noreferrer">
+                    READ NEWS →
+                </a>
+            </div>
+            <a class="news-button" href="{{ url_for('news_page') }}">
+                VIEW MORE NEWS →
+            </a>
+        {% else %}
+            <div class="empty">Gateball news could not be loaded right now.</div>
+            <a class="news-button" href="{{ url_for('news_page') }}">VIEW MORE NEWS →</a>
+        {% endif %}
+    </section>
+
+    <!-- MESSAGE BOARD -->
+    <section class="section">
+        <div class="section-head">
+            <div class="section-title">📢 Message Board</div>
+            {% if can_manage_messages %}
+                <a class="manage-button" href="{{ url_for('add_message') }}">➕ ADD MESSAGE</a>
+            {% endif %}
+        </div>
+
+        {% if message_board %}
+            {% for message in message_board %}
+                <div class="message-card">
+                    <div class="message-title">
+                        📢 {{ message.title }}
+                    </div>
+
+                    <div class="message-text">
+                        {{ message.message }}
+                    </div>
+
+                    {% if message.author_name %}
+                        <div class="message-date">
+                            Posted by {{ message.author_name }}
+                            {% if message.created_at %}
+                                • {{ message.created_at_display }}
+                            {% endif %}
+                        </div>
+                    {% elif message.created_at_display %}
+                        <div class="message-date">
+                            {{ message.created_at_display }}
+                        </div>
+                    {% endif %}
+
+                    {% if can_manage_messages %}
+                        <div class="message-actions">
+                            {% if current_user.role == 'Admin' or message.author_id == current_profile_id %}
+                                <a class="message-action edit-message" href="{{ url_for('edit_message', message_id=message.id) }}">✏ EDIT</a>
+                                <form method="post" action="{{ url_for('delete_message', message_id=message.id) }}" style="display:inline;margin:0;" onsubmit="return confirm('Delete this message?');">
+                                    <button type="submit" class="message-action delete-message">🗑 DELETE</button>
+                                </form>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="message-card">
+                <div class="message-title">
+                    📢 Gateball Lovers Community
+                </div>
+                <div class="message-text">
+                    Welcome to the Gateball Lovers community.
+                    Tournament announcements, important community
+                    messages and organizer updates will appear here.
+                </div>
+            </div>
+        {% endif %}
+    </section>
+
+    <a class="logout" href="{{ url_for('logout') }}">LOGOUT</a>
+
+    <div class="footer">
+        Gateball Lovers<br>
+        Created by Biswa Ranjan Mishra
+    </div>
+</div>
+
+<nav class="bottom-nav">
+    <a class="active" href="{{ url_for('dashboard') }}">
+        <span class="nav-icon">🏠</span>
+        Home
+    </a>
+    <a href="{{ url_for('tournaments') }}">
+        <span class="nav-icon">🏆</span>
+        Tournaments
+    </a>
+    <a href="{{ url_for('chat') }}">
+        <span class="nav-icon">💬</span>
+        Chat
+    </a>
+    <a href="{{ url_for('profile') }}">
+        <span class="nav-icon">👤</span>
+        Profile
+    </a>
+</nav>
+
+</body>
+</html>

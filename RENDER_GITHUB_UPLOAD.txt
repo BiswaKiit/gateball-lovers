@@ -1,0 +1,22 @@
+GATEBALL LOVERS — RENDER/GITHUB WEB FILES
+
+This folder is the WEB/PWA version of Gateball Lovers.
+
+Upload/copy these files and folders into the ROOT of the existing GitHub repository:
+
+app.py
+requirements.txt
+.python-version
+templates/
+static/
+
+IMPORTANT:
+- Keep the existing Kivy/mobile files (app/, assets/, main.py, buildozer.spec).
+- Do NOT delete the old mobile files.
+- Root Directory in Render must remain EMPTY.
+- Build Command: pip install -r requirements.txt
+- Start Command: gunicorn app:app
+
+Supabase SQL files from the earlier working web version are intentionally not required by Render. They were already used to configure the Supabase project.
+
+Never upload a Supabase service_role/secret key to GitHub.
