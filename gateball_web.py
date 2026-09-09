@@ -7,7 +7,7 @@ from html.parser import HTMLParser
 from xml.etree import ElementTree as ET
 
 import requests
-from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask import Flask, render_template, request, redirect, url_for, session, flash, send_from_directory
 
 # ============================================================
 # GATEBALL LOVERS - FLASK APP
@@ -605,6 +605,11 @@ def load_gateball_news():
 # ============================================================
 # LOGIN / SIGN UP / LOGOUT
 # ============================================================
+
+@app.route("/manifest.json")
+def manifest():
+    return send_from_directory(os.path.dirname(__file__), "manifest.json", mimetype="application/manifest+json")
+
 
 @app.route("/")
 def index():

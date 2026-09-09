@@ -18,8 +18,24 @@ label{font-weight:bold;font-size:13px}.grid{display:grid;grid-template-columns:1
 .bottom{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(430px,100%);display:grid;grid-template-columns:repeat(4,1fr);background:#fff;border-top:1px solid #ddd;z-index:10}
 .bottom a{padding:11px 4px;text-align:center;text-decoration:none;color:#555;font-size:12px}.bottom a.active{color:#d88900;font-weight:bold}
 </style>
+
+<link rel="manifest" href="/manifest.json">
+<link rel="stylesheet" href="/static/gateball-theme.css">
+<script defer src="/static/gateball-app.js"></script>
+<meta name="theme-color" content="#F47700">
 </head>
-<body><div class="page"><div class="content center" style="padding-top:45px">
+<body>
+<div id="glSplash" aria-label="Gateball Lovers loading">
+  <div class="gl-splash-card">
+    <img class="gl-splash-logo" src="{{ url_for('static', filename='images/gateball_lovers_app_icon.png') }}" alt="Gateball Lovers">
+    <div class="gl-splash-title">Gateball Lovers</div>
+    <div class="gl-splash-tag">Connect. Compete. Celebrate.</div>
+    <img class="gl-splash-photo" src="{{ url_for('static', filename='images/creator_photo.jpeg') }}" alt="Creator">
+    <div class="gl-splash-creator">Created by Biswa Ranjan Mishra</div>
+    <div class="gl-loader"><span></span></div>
+  </div>
+</div>
+<div class="page"><div class="content center" style="padding-top:45px">
 <img src="{{ url_for('static', filename='images/gateball_lovers_logo.png') }}" class="logo" alt="Gateball Lovers">
 <h1 style="color:#d88900">Gateball Lovers</h1><p>Connect. Compete. Celebrate.</p>
 <div class="card" style="text-align:left"><h2>Welcome Back</h2>
@@ -27,4 +43,10 @@ label{font-weight:bold;font-size:13px}.grid{display:grid;grid-template-columns:1
 <label>Password</label><input id="password" name="password" type="password" required placeholder="Enter your password">
 <button class="btn" type="submit">LOGIN</button></form>
 <a class="btn secondary" href="/signup">CREATE NEW ACCOUNT</a></div>
-<div class="creator">Created by Biswa Ranjan Mishra</div></div></div></body></html>
+<div class="creator">Created by Biswa Ranjan Mishra</div></div></div><script>
+(function(){
+  var splash=document.getElementById('glSplash');
+  if(!splash)return;
+  setTimeout(function(){splash.classList.add('gl-hide');setTimeout(function(){splash.remove()},400)},3000);
+})();
+</script></body></html>

@@ -1,0 +1,30 @@
+:root{--saffron:#F4A300;--deep-saffron:#D86F00;--orange:#FF7A00;--green:#075B35;--cream:#FFF3D6;--ink:#1F2933;--muted:#5F6368;--card:#FFFFFF}
+*{box-sizing:border-box}
+html{background:#7f2f00}
+body{background:linear-gradient(160deg,#ffb52e 0%,#f47700 42%,#b83d00 100%)!important;color:var(--ink)!important;min-height:100vh}
+.page,.app,.wrap{background:linear-gradient(180deg,#fff5dc 0%,#ffe6ad 100%)!important}
+.header,.top-header{background:linear-gradient(135deg,#ffb52e 0%,#f47700 55%,#c94700 100%)!important;box-shadow:0 4px 14px rgba(91,38,0,.25);color:#fff!important}
+.card,.section,.welcome-card{border:1px solid rgba(216,111,0,.18)!important;box-shadow:0 5px 16px rgba(91,38,0,.12)!important}
+.btn,.read,button:not(.back),.photo-btn{background:linear-gradient(135deg,#ffb52e,#f47700,#d84a00)!important;color:#fff!important;box-shadow:0 3px 8px rgba(161,65,0,.22)}
+.btn.green,.chat-btn,.send{background:linear-gradient(135deg,#12834d,#075b35)!important;color:#fff!important}
+.btn.red,.btn.live{background:linear-gradient(135deg,#e34d3c,#b51f1f)!important;color:#fff!important}
+.back{background:#6a3a20!important;color:#fff!important}
+.bottom{background:linear-gradient(180deg,#fff8e9,#ffe4ad)!important;border-top:2px solid #f0a02c!important;box-shadow:0 -4px 14px rgba(91,38,0,.14)}
+.bottom a{color:#4a3428!important}.bottom a.active{color:#c84e00!important;font-weight:900}
+input,select,textarea{background:#fffdf8!important;color:#202124!important;border:2px solid #e4bd78!important;outline:none}
+input:focus,select:focus,textarea:focus{border-color:#f47700!important;box-shadow:0 0 0 3px rgba(244,163,0,.18)}
+h1,h2,h3,.section-title{color:#263238}
+.muted,.creator,.status{color:#5b514b!important}
+.stat,.live-box,.group-card{background:linear-gradient(135deg,#fff4d5,#ffe6ae)!important;border-color:#efc36d!important}
+.stat-number,.source,.name{color:#a94700!important}
+.badge{background:#c62828!important;color:#fff!important}
+.flash{background:#fff0c7!important;color:#713f00!important;border-left:5px solid #f47700}
+.empty{color:#5d5148!important}
+/* App opening splash */
+#glSplash{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;background:linear-gradient(145deg,#ffbd32 0%,#f47700 52%,#a93600 100%);transition:opacity .35s ease}
+#glSplash.gl-hide{opacity:0;pointer-events:none}
+.gl-splash-card{width:min(390px,90vw);text-align:center;color:#fff;padding:28px 20px;border-radius:30px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);box-shadow:0 18px 45px rgba(77,25,0,.28);backdrop-filter:blur(7px)}
+.gl-splash-logo{width:210px;height:210px;object-fit:cover;border-radius:38px;display:block;margin:0 auto 15px;box-shadow:0 9px 24px rgba(73,25,0,.3)}
+.gl-splash-title{font-size:25px;font-weight:900;letter-spacing:.2px}.gl-splash-tag{font-size:13px;font-weight:700;margin-top:5px}.gl-splash-creator{margin-top:18px;font-size:12px;font-weight:700}.gl-splash-photo{width:76px;height:76px;border-radius:50%;object-fit:cover;border:4px solid #fff;display:block;margin:9px auto 0;box-shadow:0 5px 14px rgba(0,0,0,.25)}
+.gl-loader{width:54px;height:5px;border-radius:10px;background:rgba(255,255,255,.35);margin:20px auto 0;overflow:hidden}.gl-loader span{display:block;height:100%;width:45%;background:#fff;border-radius:10px;animation:glLoad 1s ease-in-out infinite}@keyframes glLoad{0%{transform:translateX(-110%)}100%{transform:translateX(230%)}}
+@media(min-width:700px){.page,.app{box-shadow:0 0 35px rgba(77,25,0,.25)}}

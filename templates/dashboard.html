@@ -340,9 +340,24 @@
             font-size: 20px;
         }
     </style>
+
+<link rel="manifest" href="/manifest.json">
+<link rel="stylesheet" href="/static/gateball-theme.css">
+<script defer src="/static/gateball-app.js"></script>
+<meta name="theme-color" content="#F47700">
 </head>
 
 <body>
+<div id="glSplash" aria-label="Gateball Lovers loading">
+  <div class="gl-splash-card">
+    <img class="gl-splash-logo" src="{{ url_for('static', filename='images/gateball_lovers_app_icon.png') }}" alt="Gateball Lovers">
+    <div class="gl-splash-title">Gateball Lovers</div>
+    <div class="gl-splash-tag">Connect. Compete. Celebrate.</div>
+    <img class="gl-splash-photo" src="{{ url_for('static', filename='images/creator_photo.jpeg') }}" alt="Creator">
+    <div class="gl-splash-creator">Created by Biswa Ranjan Mishra</div>
+    <div class="gl-loader"><span></span></div>
+  </div>
+</div>
 <div class="app">
 
     <header class="top-header">
@@ -581,5 +596,13 @@
     </a>
 </nav>
 
-</body>
+<script>
+(function(){
+  var splash=document.getElementById('glSplash');
+  if(!splash)return;
+  if(sessionStorage.getItem('gl_splash_seen')==='1'){splash.remove();return;}
+  sessionStorage.setItem('gl_splash_seen','1');
+  setTimeout(function(){splash.classList.add('gl-hide');setTimeout(function(){splash.remove()},400)},3000);
+})();
+</script></body>
 </html>

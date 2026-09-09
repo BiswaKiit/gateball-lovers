@@ -1,0 +1,4 @@
+Render settings:
+Root Directory: leave empty
+Build Command: pip install -r requirements.txt
+Start Command: gunicorn gateball_web:app

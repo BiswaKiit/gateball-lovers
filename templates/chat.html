@@ -5,8 +5,13 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
 <title>Gateball Lovers - Chat</title>
 <style>
-*{box-sizing:border-box}body{margin:0;background:#f5f5f5;font-family:Arial,sans-serif;color:#222}.page{max-width:430px;min-height:100vh;margin:auto;background:#fff;padding-bottom:78px}.header{background:#f4a300;color:#fff;padding:14px 14px 13px;position:sticky;top:0;z-index:5}.header h1{margin:0;font-size:22px}.header p{margin:4px 0 0;font-size:12px;opacity:.95}.content{padding:12px}.card{background:#fff;border:1px solid #eee;border-radius:15px;padding:13px;margin-bottom:12px;box-shadow:0 2px 8px #00000010}.group-card{background:linear-gradient(135deg,#fff4d5,#fffaf0)}.group-title{font-size:18px;font-weight:bold}.muted{color:#777;font-size:13px}.btn{display:block;width:100%;border:0;border-radius:10px;padding:12px;background:#f4a300;color:#fff;font-weight:bold;cursor:pointer;text-decoration:none;text-align:center;margin-top:9px}.search{width:100%;padding:11px;border:1px solid #ccc;border-radius:10px;font-size:15px;margin:5px 0 12px}.member{display:flex;align-items:center;gap:10px;padding:11px 3px;border-bottom:1px solid #eee}.member:last-child{border-bottom:0}.avatar{width:46px;height:46px;border-radius:50%;object-fit:cover;background:#fff0c8;border:1px solid #f1d58e;display:flex;align-items:center;justify-content:center;font-size:21px;flex:none}.member-main{min-width:0;flex:1}.member-name{font-weight:bold;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.member-meta{font-size:11px;color:#777;margin-top:3px}.chat-btn{display:inline-block;padding:9px 11px;border-radius:9px;background:#299447;color:#fff;text-decoration:none;font-size:11px;font-weight:bold;flex:none}.badge{display:inline-flex;min-width:20px;height:20px;padding:0 6px;border-radius:12px;background:#d64545;color:#fff;align-items:center;justify-content:center;font-size:10px;font-weight:bold;margin-left:5px}.status{font-size:11px;text-align:center;color:#777;margin-top:9px}.creator{margin:20px 0;text-align:center;color:#777;font-size:12px}.bottom{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(430px,100%);display:grid;grid-template-columns:repeat(4,1fr);background:#fff;border-top:1px solid #ddd;z-index:10}.bottom a{padding:11px 4px;text-align:center;text-decoration:none;color:#555;font-size:12px}.bottom a.active{color:#d88900;font-weight:bold}.empty{text-align:center;padding:18px;color:#777;font-size:13px}.hidden{display:none!important}
+*{box-sizing:border-box}body{margin:0;background:#f5f5f5;font-family:Arial,sans-serif;color:#222}.page{max-width:430px;min-height:100vh;margin:auto;background:#fff;padding-bottom:78px}.header{background:#f4a300;color:#fff;padding:14px 14px 13px;position:sticky;top:0;z-index:5}.header h1{margin:0;font-size:22px}.header p{margin:4px 0 0;font-size:12px;opacity:.95}.content{padding:12px}.card{background:#fff;border:1px solid #eee;border-radius:15px;padding:13px;margin-bottom:12px;box-shadow:0 2px 8px #00000010}.group-card{background:linear-gradient(135deg,#fff4d5,#fffaf0)}.group-title{font-size:18px;font-weight:bold}.muted{color:#777;font-size:13px}.btn{display:block;width:100%;border:0;border-radius:10px;padding:12px;background:#f4a300;color:#fff;font-weight:bold;cursor:pointer;text-decoration:none;text-align:center;margin-top:9px}.search{width:100%;padding:11px;border:1px solid #ccc;border-radius:10px;font-size:15px;margin:5px 0 12px}.member{display:flex;align-items:center;gap:10px;padding:11px 3px;border-bottom:1px solid #eee}.member:last-child{border-bottom:0}.avatar{width:46px;height:46px;border-radius:50%;object-fit:cover;background:#fff0c8;border:1px solid #f1d58e;display:flex;align-items:center;justify-content:center;font-size:21px;flex:none}.member-main{min-width:0;flex:1}.member-name{font-weight:bold;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.member-meta{font-size:11px;color:#777;margin-top:3px}.chat-btn{display:inline-block;padding:9px 11px;border-radius:9px;background:#299447;color:#fff;text-decoration:none;font-size:11px;font-weight:bold;flex:none}.badge{display:inline-flex;min-width:20px;height:20px;padding:0 6px;border-radius:12px;background:#d64545;color:#fff;align-items:center;justify-content:center;font-size:10px;font-weight:bold;margin-left:5px}.status{font-size:11px;text-align:center;color:#777;margin-top:9px}.creator{margin:20px 0;text-align:center;color:#777;font-size:12px}.bottom{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(430px,100%);display:grid;grid-template-columns:repeat(4,1fr);background:#fff;border-top:1px solid #ddd;z-index:10}.bottom a{padding:11px 4px;text-align:center;text-decoration:none;color:#555;font-size:12px}.bottom a.active{color:#d88900;font-weight:bold}.empty{text-align:center;padding:18px;color:#777;font-size:13px}.hidden{display:none!important}.chat-toast{position:fixed;left:50%;top:76px;transform:translateX(-50%);width:min(390px,92%);padding:12px 14px;background:linear-gradient(135deg,#075b35,#12834d);color:#fff;border-radius:14px;box-shadow:0 8px 24px rgba(0,0,0,.25);z-index:100;font-weight:700;font-size:13px;text-align:center;cursor:pointer}
 </style>
+
+<link rel="manifest" href="/manifest.json">
+<link rel="stylesheet" href="/static/gateball-theme.css">
+<script defer src="/static/gateball-app.js"></script>
+<meta name="theme-color" content="#F47700">
 </head>
 <body>
 <div class="page">
@@ -70,6 +75,19 @@ function setBadge(memberId, count){
   const el=document.getElementById('badge-'+memberId); if(!el)return;
   if(count>0){el.textContent=count>99?'99+':count;el.classList.remove('hidden')}else{el.classList.add('hidden')}
 }
+function showChatToast(senderId){
+  let toast=document.getElementById('chatToast');
+  if(!toast){
+    toast=document.createElement('div');toast.id='chatToast';toast.className='chat-toast';document.body.appendChild(toast);
+  }
+  const badge=document.getElementById('badge-'+senderId);
+  const row=badge?badge.closest('.member'):null;
+  const name=row?row.querySelector('.member-name')?.childNodes?.[0]?.textContent?.trim():'New message';
+  toast.textContent='💬 New message from '+(name||'a Gateball member')+' — tap to open';
+  toast.onclick=function(){const btn=document.querySelector('.chat-btn[data-member-id="'+senderId+'"]');if(btn)btn.click();};
+  clearTimeout(window.__glToastTimer);window.__glToastTimer=setTimeout(()=>{if(toast)toast.remove()},5000);
+}
+
 function markChatRead(memberId){ setRead(memberId, Date.now()); setBadge(memberId,0); }
 
 document.querySelectorAll('.chat-btn').forEach(a=>a.addEventListener('click',()=>markChatRead(a.dataset.memberId)));
@@ -135,13 +153,23 @@ async function loadUnread(){
 
 function subscribeRealtime(){
   sb.channel('chat-home-'+MY_ID)
-    .on('postgres_changes',{event:'INSERT',schema:'public',table:'direct_messages',filter:'receiver_id=eq.'+MY_ID},payload=>{
-      const m=payload.new||{}; const sender=String(m.sender_id||'');
-      if(!sender)return; if(new Date(m.created_at).getTime()>getRead(sender)){
-        const el=document.getElementById('badge-'+sender); const old=el&&!el.classList.contains('hidden')?parseInt(el.textContent)||0:0; setBadge(sender,old+1);
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'direct_messages'},payload=>{
+      const m=payload.new||{};
+      const sender=String(m.sender_id||'');
+      const receiver=String(m.receiver_id||'');
+      // Listen for all direct-message inserts and filter in the browser.
+      // This is more reliable on the chat list than a server-side Realtime filter.
+      if(!sender || receiver!==String(MY_ID) || sender===String(MY_ID))return;
+      if(new Date(m.created_at).getTime()>getRead(sender)){
+        const el=document.getElementById('badge-'+sender);
+        const old=el&&!el.classList.contains('hidden')?parseInt(el.textContent)||0:0;
+        setBadge(sender,old+1);
+        showChatToast(sender);
       }
     })
-    .subscribe();
+    .subscribe((state)=>{
+      if(state!=='SUBSCRIBED') console.warn('Direct chat realtime state:',state);
+    });
 
   sb.channel('chat-group-home-'+MY_ID)
     .on('postgres_changes',{event:'INSERT',schema:'public',table:'community_group_messages'},payload=>{
