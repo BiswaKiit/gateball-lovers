@@ -1,0 +1,42 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Gateball Lovers - Gateball News</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f5f5f5;font-family:Arial,sans-serif;color:#222}.page{max-width:430px;min-height:100vh;margin:auto;background:#fff;padding-bottom:78px}.header{background:#f4a300;color:#fff;padding:15px;position:sticky;top:0;z-index:5}.header h1{margin:0;font-size:21px}.header p{margin:4px 0 0;font-size:12px}.content{padding:14px}.back{display:block;text-decoration:none;background:#777;color:#fff;text-align:center;padding:11px;border-radius:10px;font-weight:bold;font-size:12px;margin-bottom:12px}.news-card{border:1px solid #eee;border-left:5px solid #f4a300;border-radius:12px;padding:12px;margin-bottom:10px}.source{font-size:11px;color:#d88900;font-weight:bold}.title{font-size:14px;font-weight:800;line-height:1.45;margin-top:5px}.date{font-size:10px;color:#999;margin-top:5px}.read{display:inline-block;margin-top:9px;padding:8px 11px;border-radius:9px;text-decoration:none;font-size:12px;font-weight:bold;background:#f4a300;color:#fff}.empty{padding:20px;text-align:center;color:#777}.creator{text-align:center;color:#777;font-size:12px;margin:20px}.bottom{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(430px,100%);display:grid;grid-template-columns:repeat(4,1fr);background:#fff;border-top:1px solid #ddd;z-index:10}.bottom a{padding:11px 4px;text-align:center;text-decoration:none;color:#555;font-size:12px}.bottom a.active{color:#d88900;font-weight:bold}
+</style>
+
+<link rel="manifest" href="/manifest.json">
+<link rel="stylesheet" href="/static/gateball-theme.css">
+<script defer src="/static/gateball-app.js"></script>
+<meta name="theme-color" content="#F47700">
+</head>
+<body>
+<div class="page">
+<div class="header"><h1>📰 Gateball News</h1><p>Latest Gateball headlines from around the world</p></div>
+<div class="content">
+<a class="back" href="{{ url_for('dashboard') }}">← BACK TO DASHBOARD</a>
+{% if news %}
+    {% for item in news %}
+    <div class="news-card">
+        <div class="source">{{ item.source }}</div>
+        <div class="title">{{ item.title }}</div>
+        <a class="read" href="{{ item.url }}" target="_blank" rel="noopener noreferrer">READ NEWS →</a>
+    </div>
+    {% endfor %}
+{% else %}
+    <div class="empty">Gateball news could not be loaded right now. Please try again later.</div>
+{% endif %}
+<div class="creator">Created by Biswa Ranjan Mishra</div>
+</div>
+<nav class="bottom">
+<a class="active" href="{{ url_for('dashboard') }}">🏠<br>Home</a>
+<a href="{{ url_for('tournaments') }}">🏆<br>Tournaments</a>
+<a href="{{ url_for('chat') }}">💬<br>Chat</a>
+<a href="{{ url_for('profile') }}">👤<br>Profile</a>
+</nav>
+</div>
+</body>
+</html>

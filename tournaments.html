@@ -1,0 +1,165 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Gateball Lovers - Tournaments</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#f5f5f5;font-family:Arial,sans-serif;color:#222}
+.page{max-width:430px;min-height:100vh;margin:auto;background:#fff;padding-bottom:82px}
+.header{background:#f4a300;color:#fff;padding:16px;text-align:center;position:sticky;top:0;z-index:20}
+.header h1{margin:0;font-size:21px}.header p{margin:4px 0 0;font-size:12px}
+.content{padding:14px}
+.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:12px}
+.tab{display:block;text-decoration:none;text-align:center;padding:11px 4px;border-radius:10px;font-size:12px;font-weight:800;border:0}
+.tab.active{background:#f4a300;color:#fff}.tab.inactive{background:#e5e5e5;color:#333}
+.flash{padding:10px 12px;border-radius:10px;background:#fff3d6;color:#8a5a00;font-size:13px;margin-bottom:12px}
+.card{background:#fff;border:1px solid #eee;border-radius:14px;padding:14px;margin-bottom:12px;box-shadow:0 2px 8px #00000012}
+.card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.name{margin:0;font-size:17px;line-height:1.3}.badge{display:inline-block;padding:4px 8px;border-radius:20px;background:#fff0c8;color:#9a6500;font-size:10px;font-weight:bold;white-space:nowrap}
+.info{color:#666;font-size:13px;line-height:1.65;margin-top:9px}.muted{color:#777;font-size:13px}
+.btn{display:block;width:100%;border:0;border-radius:10px;padding:11px;background:#f4a300;color:#fff;font-weight:bold;cursor:pointer;text-decoration:none;text-align:center;margin-top:8px;font-size:12px}
+.btn.secondary{background:#eee;color:#222}.btn.green{background:#299447}.btn.red{background:#d64545}.btn.live{background:#d62828}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:9px}.actions form{margin:0}
+.live-box{margin-top:12px;padding:11px;background:#fff8e8;border-radius:11px;border:1px solid #f2d89b}
+.live-box strong{display:block;font-size:13px;color:#9a6500;margin-bottom:5px}
+input,select,textarea{width:100%;padding:10px;border:1px solid #ccc;border-radius:9px;font-size:14px;margin-top:5px}
+.result-box{margin-top:12px;padding:11px;background:#fafafa;border-radius:10px;border:1px solid #eee}
+.result-row{display:grid;grid-template-columns:48px 1fr auto;gap:7px;align-items:center;padding:7px 0;border-bottom:1px solid #eee;font-size:13px}.result-row:last-child{border-bottom:0}
+.place{font-weight:800;color:#a96d00}.score{font-weight:800;color:#333}
+.section-card{padding:12px;margin-bottom:12px;background:#fff;border:1px solid #eee;border-radius:14px}
+.creator{margin:20px 0;text-align:center;color:#777;font-size:12px}
+.bottom{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(430px,100%);display:grid;grid-template-columns:repeat(4,1fr);background:#fff;border-top:1px solid #ddd;z-index:30}
+.bottom a{padding:11px 4px;text-align:center;text-decoration:none;color:#555;font-size:12px}.bottom a.active{color:#d88900;font-weight:bold}
+</style>
+
+<link rel="manifest" href="/manifest.json">
+<link rel="stylesheet" href="/static/gateball-theme.css">
+<script defer src="/static/gateball-app.js"></script>
+<meta name="theme-color" content="#F47700">
+</head>
+<body>
+<div class="page">
+<div class="header"><h1>🏆 Tournaments</h1><p>Connect. Compete. Celebrate.</p></div>
+<div class="content">
+
+{% with messages = get_flashed_messages() %}
+{% if messages %}
+    {% for message in messages %}<div class="flash">{{ message }}</div>{% endfor %}
+{% endif %}
+{% endwith %}
+
+<div class="tabs">
+    <a class="tab {{ 'active' if current_status == 'Upcoming' else 'inactive' }}" href="{{ url_for('tournaments', status='Upcoming') }}">Upcoming</a>
+    <a class="tab {{ 'active' if current_status == 'Ongoing' else 'inactive' }}" href="{{ url_for('tournaments', status='Ongoing') }}">Ongoing</a>
+    <a class="tab {{ 'active' if current_status == 'Finished' else 'inactive' }}" href="{{ url_for('tournaments', status='Finished') }}">Finished</a>
+</div>
+
+<div class="section-card">
+    <div class="card-head">
+        <div>
+            <h2 style="margin:0;font-size:18px">{{ current_status }}</h2>
+            <div class="muted" style="margin-top:4px">
+                {% if current_status == 'Upcoming' %}Upcoming tournaments and registration{% endif %}
+                {% if current_status == 'Ongoing' %}Live tournaments and streaming links{% endif %}
+                {% if current_status == 'Finished' %}Completed tournaments and results{% endif %}
+            </div>
+        </div>
+        {% if can_manage and current_status == 'Upcoming' %}
+            <a class="btn" style="width:auto;margin:0;white-space:nowrap" href="{{ url_for('add_tournament') }}">＋ ADD</a>
+        {% endif %}
+    </div>
+</div>
+
+{% if tournaments %}
+{% for t in tournaments %}
+<div class="card">
+    <div class="card-head">
+        <h3 class="name">{{ t.name }}</h3>
+        <span class="badge">{{ t.event_type }}</span>
+    </div>
+
+    <div class="info">
+        📍 {{ t.venue or 'Venue not specified' }}<br>
+        🌏 {{ t.country or 'Country not specified' }}<br>
+        📅 {{ t.display_start }}{% if t.display_end %} → {{ t.display_end }}{% endif %}<br>
+        👤 Organizer: {{ t.organizer_name or 'Not specified' }}
+        {% if t.description %}<br>📝 {{ t.description }}{% endif %}
+    </div>
+
+    {% if current_status == 'Upcoming' %}
+        {% if t.joined %}
+            <div class="btn green" style="cursor:default">✓ JOINED</div>
+        {% elif current_user and current_user.role == 'Player' %}
+            <a class="btn green" href="{{ url_for('join_tournament', tournament_id=t.id) }}">JOIN TOURNAMENT</a>
+        {% endif %}
+
+        {% if t.can_manage %}
+        <div class="actions">
+            <a class="btn secondary" href="{{ url_for('edit_tournament', tournament_id=t.id) }}">✏ EDIT</a>
+            <form method="post" action="{{ url_for('delete_tournament', tournament_id=t.id) }}" onsubmit="return confirm('Delete this tournament? This will also remove its players and results.');">
+                <button class="btn red" type="submit">🗑 DELETE</button>
+            </form>
+        </div>
+        {% endif %}
+    {% endif %}
+
+    {% if current_status == 'Ongoing' %}
+        {% if t.live_link %}
+            <a class="btn live" target="_blank" rel="noopener noreferrer" href="{{ t.live_link }}">▶ WATCH LIVE</a>
+        {% endif %}
+
+        {% if t.can_manage %}
+        <div class="live-box">
+            <strong>🔴 Live Social Media Link</strong>
+            <form method="post" action="{{ url_for('save_live_link', tournament_id=t.id) }}">
+                <input type="url" name="live_link" value="{{ t.live_link or '' }}" placeholder="https://facebook.com/... or YouTube link">
+                <button class="btn" type="submit">{{ 'UPDATE LIVE LINK' if t.live_link else 'ADD LIVE LINK' }}</button>
+            </form>
+        </div>
+        {% endif %}
+    {% endif %}
+
+    {% if current_status == 'Finished' %}
+        {% set result_rows = t.results.get(t.event_type, []) if t.results else [] %}
+        {% if result_rows %}
+            <div class="result-box">
+                <strong>🏆 Results — {{ t.event_type }}</strong>
+                {% for r in result_rows|sort(attribute='position') %}
+                    <div class="result-row">
+                        <div class="place">{{ r.position }}{% if r.position == 1 %}st{% elif r.position == 2 %}nd{% elif r.position == 3 %}rd{% else %}th{% endif %}</div>
+                        <div>{{ r.team_name }}</div>
+                        <div class="score">{{ r.score or '' }}</div>
+                    </div>
+                {% endfor %}
+            </div>
+            {% if t.can_manage %}
+                <a class="btn secondary" href="{{ url_for('add_result', tournament_id=t.id) }}">✏ EDIT RESULT</a>
+            {% endif %}
+        {% else %}
+            {% if t.can_manage %}
+                <a class="btn" href="{{ url_for('add_result', tournament_id=t.id) }}">🏆 ADD RESULT</a>
+            {% else %}
+                <div class="muted" style="margin-top:10px">Results have not been added yet.</div>
+            {% endif %}
+        {% endif %}
+    {% endif %}
+</div>
+{% endfor %}
+{% else %}
+<div class="card" style="text-align:center"><p class="muted">No {{ current_status|lower }} tournaments at the moment.</p></div>
+{% endif %}
+
+<div class="creator">Created by Biswa Ranjan Mishra</div>
+</div>
+
+<nav class="bottom">
+<a href="{{ url_for('dashboard') }}">🏠<br>Home</a>
+<a class="active" href="{{ url_for('tournaments') }}">🏆<br>Tournaments</a>
+<a href="{{ url_for('chat') }}">💬<br>Chat</a>
+<a href="{{ url_for('profile') }}">👤<br>Profile</a>
+</nav>
+</div>
+</body>
+</html>

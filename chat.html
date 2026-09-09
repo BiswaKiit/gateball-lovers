@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Gateball Lovers - Chat</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f5f5f5;font-family:Arial,sans-serif;color:#222}.page{max-width:430px;min-height:100vh;margin:auto;background:#fff;padding-bottom:78px}.header{background:#f4a300;color:#fff;padding:14px 14px 13px;position:sticky;top:0;z-index:5}.header h1{margin:0;font-size:22px}.header p{margin:4px 0 0;font-size:12px;opacity:.95}.content{padding:12px}.card{background:#fff;border:1px solid #eee;border-radius:15px;padding:13px;margin-bottom:12px;box-shadow:0 2px 8px #00000010}.group-card{background:linear-gradient(135deg,#fff4d5,#fffaf0)}.group-title{font-size:18px;font-weight:bold}.muted{color:#777;font-size:13px}.btn{display:block;width:100%;border:0;border-radius:10px;padding:12px;background:#f4a300;color:#fff;font-weight:bold;cursor:pointer;text-decoration:none;text-align:center;margin-top:9px}.search{width:100%;padding:11px;border:1px solid #ccc;border-radius:10px;font-size:15px;margin:5px 0 12px}.member{display:flex;align-items:center;gap:10px;padding:11px 3px;border-bottom:1px solid #eee}.member:last-child{border-bottom:0}.avatar{width:46px;height:46px;border-radius:50%;object-fit:cover;background:#fff0c8;border:1px solid #f1d58e;display:flex;align-items:center;justify-content:center;font-size:21px;flex:none}.member-main{min-width:0;flex:1}.member-name{font-weight:bold;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.member-meta{font-size:11px;color:#777;margin-top:3px}.chat-btn{display:inline-block;padding:9px 11px;border-radius:9px;background:#299447;color:#fff;text-decoration:none;font-size:11px;font-weight:bold;flex:none}.badge{display:inline-flex;min-width:20px;height:20px;padding:0 6px;border-radius:12px;background:#d64545;color:#fff;align-items:center;justify-content:center;font-size:10px;font-weight:bold;margin-left:5px}.status{font-size:11px;text-align:center;color:#777;margin-top:9px}.creator{margin:20px 0;text-align:center;color:#777;font-size:12px}.bottom{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(430px,100%);display:grid;grid-template-columns:repeat(4,1fr);background:#fff;border-top:1px solid #ddd;z-index:10}.bottom a{padding:11px 4px;text-align:center;text-decoration:none;color:#555;font-size:12px}.bottom a.active{color:#d88900;font-weight:bold}.empty{text-align:center;padding:18px;color:#777;font-size:13px}.hidden{display:none!important}.chat-toast{position:fixed;left:50%;top:76px;transform:translateX(-50%);width:min(390px,92%);padding:12px 14px;background:linear-gradient(135deg,#075b35,#12834d);color:#fff;border-radius:14px;box-shadow:0 8px 24px rgba(0,0,0,.25);z-index:100;font-weight:700;font-size:13px;text-align:center;cursor:pointer}
+</style>
+
+<link rel="manifest" href="/manifest.json">
+<link rel="stylesheet" href="/static/gateball-theme.css">
+<script defer src="/static/gateball-app.js"></script>
+<meta name="theme-color" content="#F47700">
+</head>
+<body>
+<div class="page">
+  <div class="header"><h1>💬 Chat</h1><p>Connect with Gateball Lovers</p></div>
+  <div class="content">
+    <div class="card group-card">
+      <div class="group-title">🌐 Gateball Lovers Community</div>
+      <div class="muted" style="margin-top:5px">Latest community messages</div>
+      <div id="groupPreview" style="margin-top:8px">
+        <div class="muted">Loading group chat...</div>
+      </div>
+      <a class="btn" href="{{ url_for('group_chat') }}">OPEN GROUP CHAT</a>
+      <div id="groupUnread" class="status"></div>
+    </div>
+
+    <div class="card">
+      <h3 style="margin:0 0 8px">👥 Individual Chat</h3>
+      <input id="memberSearch" class="search" type="search" placeholder="Search members..." autocomplete="off">
+      <div id="membersList">
+        {% for member in members %}
+        <div class="member" data-name="{{ (member.get('full_name') or 'Gateball Member')|lower }}" data-country="{{ (member.get('country') or '')|lower }}">
+          {% if member.get('photo_url') %}
+            <img class="avatar" src="{{ member.get('photo_url') }}" alt="">
+          {% else %}
+            <div class="avatar">👤</div>
+          {% endif %}
+          <div class="member-main">
+            <div class="member-name">{{ member.get('full_name') or 'Gateball Member' }} <span id="badge-{{ member.get('id') }}" class="badge hidden">0</span></div>
+            <div class="member-meta">{{ member.get('country') or 'Country not set' }} · {{ member.get('role') or 'Player' }}</div>
+          </div>
+          <a class="chat-btn" href="{{ url_for('direct_chat', user_id=member.get('id')) }}" data-member-id="{{ member.get('id') }}">CHAT</a>
+        </div>
+        {% else %}
+        <div class="empty">No other community members found.</div>
+        {% endfor %}
+      </div>
+    </div>
+    <div id="chatStatus" class="status">Connecting to chat...</div>
+    <div class="creator">Created by Biswa Ranjan Mishra</div>
+  </div>
+  <nav class="bottom">
+    <a href="{{ url_for('dashboard') }}">🏠<br>Home</a>
+    <a href="{{ url_for('tournaments') }}">🏆<br>Tournaments</a>
+    <a href="{{ url_for('chat') }}" class="active">💬<br>Chat</a>
+    <a href="{{ url_for('profile') }}">👤<br>Profile</a>
+  </nav>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SB_URL = {{ supabase_url|tojson }};
+const SB_KEY = {{ supabase_publishable_key|tojson }};
+const ACCESS_TOKEN = {{ access_token|tojson }};
+const MY_ID = {{ current_user_id|tojson }};
+let sb = null;
+
+function readKey(memberId){ return 'gl_chat_read_' + memberId; }
+function getRead(memberId){ return Number(localStorage.getItem(readKey(memberId)) || 0); }
+function setRead(memberId, value){ localStorage.setItem(readKey(memberId), String(value || Date.now())); }
+function setBadge(memberId, count){
+  const el=document.getElementById('badge-'+memberId); if(!el)return;
+  if(count>0){el.textContent=count>99?'99+':count;el.classList.remove('hidden')}else{el.classList.add('hidden')}
+}
+function showChatToast(senderId){
+  let toast=document.getElementById('chatToast');
+  if(!toast){
+    toast=document.createElement('div');toast.id='chatToast';toast.className='chat-toast';document.body.appendChild(toast);
+  }
+  const badge=document.getElementById('badge-'+senderId);
+  const row=badge?badge.closest('.member'):null;
+  const name=row?row.querySelector('.member-name')?.childNodes?.[0]?.textContent?.trim():'New message';
+  toast.textContent='💬 New message from '+(name||'a Gateball member')+' — tap to open';
+  toast.onclick=function(){const btn=document.querySelector('.chat-btn[data-member-id="'+senderId+'"]');if(btn)btn.click();};
+  clearTimeout(window.__glToastTimer);window.__glToastTimer=setTimeout(()=>{if(toast)toast.remove()},5000);
+}
+
+function markChatRead(memberId){ setRead(memberId, Date.now()); setBadge(memberId,0); }
+
+document.querySelectorAll('.chat-btn').forEach(a=>a.addEventListener('click',()=>markChatRead(a.dataset.memberId)));
+
+const search=document.getElementById('memberSearch');
+search.addEventListener('input',()=>{
+  const q=search.value.trim().toLowerCase();
+  document.querySelectorAll('#membersList .member').forEach(row=>{
+    row.classList.toggle('hidden', q && !(row.dataset.name.includes(q)||row.dataset.country.includes(q)));
+  });
+});
+
+async function loadGroupPreview(){
+  const box=document.getElementById('groupPreview');
+  if(!box || !sb) return;
+  try{
+    const {data,error}=await sb.from('community_group_messages')
+      .select('id,sender_id,message,created_at')
+      .order('created_at',{ascending:false})
+      .limit(3);
+    if(error) throw error;
+    const rows=(data||[]).reverse();
+    if(!rows.length){
+      box.innerHTML='<div class="muted">No group messages yet. Start the conversation! 👋</div>';
+      return;
+    }
+    box.innerHTML=rows.map(m=>{
+      const mine=String(m.sender_id)===String(MY_ID);
+      const text=String(m.message||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+      return `<div style="padding:7px 9px;margin-top:5px;background:${mine?'#fff4d5':'#fff'};border:1px solid #eee;border-radius:9px;font-size:12px;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${mine?'You':'Member'}: ${text}</div>`;
+    }).join('');
+  }catch(e){
+    console.warn('Group preview:',e);
+    box.innerHTML='<div class="muted">Group chat preview unavailable.</div>';
+  }
+}
+
+async function init(){
+  if(!window.supabase){document.getElementById('chatStatus').textContent='Chat service could not load.';return;}
+  sb=window.supabase.createClient(SB_URL,SB_KEY,{global:{headers:{Authorization:'Bearer '+ACCESS_TOKEN}}});
+  try{ if(ACCESS_TOKEN) sb.realtime.setAuth(ACCESS_TOKEN); }catch(e){console.warn(e)}
+
+  await loadUnread();
+  await loadGroupPreview();
+  subscribeRealtime();
+  document.getElementById('chatStatus').textContent='Chat is connected ✓';
+}
+
+async function loadUnread(){
+  try{
+    const {data,error}=await sb.from('direct_messages').select('sender_id,receiver_id,created_at').or('receiver_id.eq.'+MY_ID+',sender_id.eq.'+MY_ID).order('created_at',{ascending:false}).limit(500);
+    if(error) throw error;
+    const counts={};
+    (data||[]).forEach(m=>{
+      const incoming=String(m.receiver_id)===String(MY_ID);
+      if(!incoming)return;
+      const sender=String(m.sender_id); const t=new Date(m.created_at).getTime();
+      if(t>getRead(sender)) counts[sender]=(counts[sender]||0)+1;
+    });
+    Object.keys(counts).forEach(id=>setBadge(id,counts[id]));
+  }catch(e){console.warn('Unread load:',e)}
+}
+
+function subscribeRealtime(){
+  sb.channel('chat-home-'+MY_ID)
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'direct_messages'},payload=>{
+      const m=payload.new||{};
+      const sender=String(m.sender_id||'');
+      const receiver=String(m.receiver_id||'');
+      // Listen for all direct-message inserts and filter in the browser.
+      // This is more reliable on the chat list than a server-side Realtime filter.
+      if(!sender || receiver!==String(MY_ID) || sender===String(MY_ID))return;
+      if(new Date(m.created_at).getTime()>getRead(sender)){
+        const el=document.getElementById('badge-'+sender);
+        const old=el&&!el.classList.contains('hidden')?parseInt(el.textContent)||0:0;
+        setBadge(sender,old+1);
+        showChatToast(sender);
+      }
+    })
+    .subscribe((state)=>{
+      if(state!=='SUBSCRIBED') console.warn('Direct chat realtime state:',state);
+    });
+
+  sb.channel('chat-group-home-'+MY_ID)
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'community_group_messages'},payload=>{
+      loadGroupPreview();
+      const t=new Date((payload.new||{}).created_at||Date.now()).getTime();
+      const last=Number(localStorage.getItem('gl_group_read')||0);
+      if(t>last && String((payload.new||{}).sender_id)!==String(MY_ID)){
+        const el=document.getElementById('groupUnread'); if(el)el.textContent='🔴 New group message';
+      }
+    })
+    .subscribe();
+}
+
+document.querySelector('.group-card .btn').addEventListener('click',()=>localStorage.setItem('gl_group_read',String(Date.now())));
+init();
+</script>
+</body>
+</html>

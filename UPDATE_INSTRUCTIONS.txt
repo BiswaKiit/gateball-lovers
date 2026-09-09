@@ -1,0 +1,20 @@
+GATEBALL LOVERS - SESSION + CHAT NOTIFICATION UPDATE
+
+What changed
+1. Login is now remembered for 30 days unless the member presses LOGOUT.
+2. Supabase access tokens are refreshed automatically when needed, so an expired token should not force a new sign-in.
+3. The PWA service worker is now served from /sw.js at the site root.
+4. Chat notifications can appear as browser/phone notifications while the PWA/browser is running in the background.
+5. A small "Enable chat notifications" button appears after login. Allow notifications once.
+6. Clicking a Gateball Lovers notification opens the Chat page.
+
+IMPORTANT
+- This update does NOT sign a member out when the browser/PWA is closed.
+- The member still signs out only by using the app's LOGOUT action, or when the 30-day remembered session expires / Supabase invalidates the refresh token.
+- True notification delivery after the browser/PWA process has been completely closed requires Web Push server delivery. That is a separate next step; Supabase Realtime alone cannot deliver a notification to a killed browser process.
+
+Deployment
+- Upload/replace the files in this ZIP at the GitHub repository root.
+- Do NOT delete app/, assets/, main.py, or buildozer.spec.
+- Keep Render Start Command: gunicorn gateball_web:app
+- Keep Build Command: pip install -r requirements.txt

@@ -1,6 +1,6 @@
 import os
 import re
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from functools import wraps
 from urllib.parse import urljoin
 from html.parser import HTMLParser
@@ -15,6 +15,7 @@ from flask import Flask, render_template, request, redirect, url_for, session, f
 
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASK_SECRET_KEY", "gateball-lovers-change-this-key")
+app.permanent_session_lifetime = timedelta(days=30)
 
 SUPABASE_URL = os.getenv(
     "SUPABASE_URL",
@@ -147,6 +148,82 @@ def supabase_auth_password(email, password):
         raise RuntimeError(message)
 
     return data
+
+
+def supabase_auth_refresh(refresh_token):
+    """Refresh an expired Supabase access token without asking the member to sign in again."""
+    if not refresh_token:
+        raise RuntimeError("Session expired. Please log in again.")
+
+    url = f"{SUPABASE_URL}/auth/v1/token?grant_type=refresh_token"
+    response = requests.post(
+        url,
+        headers={
+            "apikey": SUPABASE_PUBLISHABLE_KEY,
+            "Content-Type": "application/json",
+        },
+        json={"refresh_token": refresh_token},
+        timeout=20,
+    )
+    try:
+        data = response.json()
+    except Exception:
+        data = {}
+
+    if response.status_code >= 400:
+        message = (
+            data.get("error_description")
+            or data.get("msg")
+            or data.get("message")
+            or "Session expired. Please log in again."
+        )
+        raise RuntimeError(message)
+
+    return data
+
+
+def _jwt_expired_or_soon(token, margin_seconds=120):
+    """Read the JWT exp claim only to decide when a refresh is needed."""
+    try:
+        import base64, json, time
+        payload = token.split(".")[1]
+        payload += "=" * (-len(payload) % 4)
+        exp = json.loads(base64.urlsafe_b64decode(payload.encode("ascii"))).get("exp")
+        return not exp or float(exp) <= time.time() + margin_seconds
+    except Exception:
+        return True
+
+
+def refresh_session_if_needed():
+    """Keep the member signed in across browser/PWA restarts and refresh short-lived access tokens."""
+    if not session.get("user_id"):
+        return False
+
+    session.permanent = True
+    token = session.get("access_token")
+    if token and not _jwt_expired_or_soon(token):
+        return True
+
+    try:
+        data = supabase_auth_refresh(session.get("refresh_token", ""))
+        access_token = data.get("access_token")
+        if not access_token:
+            raise RuntimeError("Session refresh failed.")
+        session["access_token"] = access_token
+        if data.get("refresh_token"):
+            session["refresh_token"] = data["refresh_token"]
+        return True
+    except Exception as exc:
+        print("Session refresh error:", repr(exc))
+        session.clear()
+        return False
+
+
+@app.before_request
+def keep_member_signed_in():
+    if session.get("user_id"):
+        if not refresh_session_if_needed():
+            return redirect(url_for("login"))
 
 
 def supabase_signup(email, password, metadata):
@@ -611,6 +688,25 @@ def manifest():
     return send_from_directory(os.path.dirname(__file__), "manifest.json", mimetype="application/manifest+json")
 
 
+@app.route("/sw.js")
+def service_worker():
+    # Serve the service worker from the site root so it can control the whole PWA.
+    return send_from_directory(os.path.join(os.path.dirname(__file__), "static"), "sw.js", mimetype="application/javascript")
+
+
+@app.route("/api/session-info")
+def session_info():
+    if not session.get("user_id"):
+        return {"logged_in": False}
+    return {
+        "logged_in": True,
+        "user_id": str(session.get("user_id") or ""),
+        "access_token": session.get("access_token", ""),
+        "supabase_url": SUPABASE_URL,
+        "supabase_key": SUPABASE_PUBLISHABLE_KEY,
+    }
+
+
 @app.route("/")
 def index():
     if session.get("user_id"):
@@ -648,6 +744,7 @@ def login():
                 raise RuntimeError("Login failed.")
 
             session.clear()
+            session.permanent = True
             session["access_token"] = access_token
             session["refresh_token"] = auth.get("refresh_token", "")
             session["user_id"] = user_id

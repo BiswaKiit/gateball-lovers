@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#F4A300">
+<title>{{ title }} - Gateball Lovers</title>
+<style>
+body{font-family:Arial,Helvetica,sans-serif;background:#fff8e8;margin:0;padding:20px;color:#222}
+.wrap{max-width:430px;margin:auto}
+.card{background:#fff;border-radius:18px;padding:20px;box-shadow:0 5px 18px rgba(0,0,0,.10)}
+h1{color:#d88900;font-size:23px;margin-top:0}
+label{display:block;margin-top:13px;font-weight:bold;color:#555}
+input,textarea{width:100%;padding:12px;margin-top:6px;border:1px solid #ddd;border-radius:10px;box-sizing:border-box;font:inherit}
+textarea{min-height:180px;resize:vertical;line-height:1.5}
+button,.btn{display:block;width:100%;padding:13px;margin-top:16px;border:0;border-radius:11px;background:#f4a300;color:#fff;font-weight:bold;text-decoration:none;text-align:center;box-sizing:border-box;cursor:pointer}
+.back{background:#777}
+.msg{margin:0 0 10px;color:#c62828;line-height:1.5}
+.note{font-size:11px;color:#777;margin-top:8px;line-height:1.4}
+</style>
+
+<link rel="manifest" href="/manifest.json">
+<link rel="stylesheet" href="/static/gateball-theme.css">
+<script defer src="/static/gateball-app.js"></script>
+<meta name="theme-color" content="#F47700">
+</head>
+<body>
+<div class="wrap"><div class="card">
+<h1>{{ title }}</h1>
+{% with messages=get_flashed_messages() %}
+{% if messages %}<div class="msg">{% for m in messages %}{{ m }}<br>{% endfor %}</div>{% endif %}
+{% endwith %}
+<form method="post">
+<label>Message Title</label>
+<input type="text" name="title" value="{{ message_title|e }}" maxlength="200" required>
+
+<label>Message</label>
+<textarea name="message" maxlength="5000" required>{{ message_body }}</textarea>
+
+<div class="note">Messages are stored in the Supabase <b>community_messages</b> table.</div>
+<button type="submit">SAVE MESSAGE</button>
+<a class="btn back" href="{{ url_for('dashboard') }}">BACK TO DASHBOARD</a>
+</form>
+</div></div>
+</body>
+</html>
