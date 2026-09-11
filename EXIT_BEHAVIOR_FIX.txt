@@ -1,19 +1,10 @@
-Gateball Lovers - Exit Behavior Fix
+Gateball Lovers - Exit Confirmation Removed
 
-This update removes the incorrect fallback that sent the member to the Dashboard
-when the browser blocked window.close().
+The custom "Do you want to Exit? Yes / No" behavior has been removed.
 
-Expected behavior:
-- Back from an internal app page can show the Exit confirmation.
-- NO stays in the app.
-- YES attempts to close/leave the PWA window.
-- The app no longer redirects YES back to Dashboard.
+The app now uses normal browser/PWA navigation. A member can use the
+device/browser Home or app controls to leave Gateball Lovers, and can reopen it
+later. The persistent sign-in/session behavior remains unchanged.
 
-Important browser/PWA limitation:
-A normal browser tab cannot be forcibly closed by JavaScript unless it was
-opened by script. Installed PWAs are controlled by the browser/OS. Therefore
-the YES action cannot guarantee physically closing a browser/PWA window.
-The previous Dashboard redirect has been removed because it caused the loop.
-
-Existing authentication, Supabase, signup/email verification, and chat code are
-otherwise left unchanged by this patch.
+No Supabase authentication, signup/email verification, profile, tournament,
+or chat database changes are included in this patch.

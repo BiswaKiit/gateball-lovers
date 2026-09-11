@@ -109,34 +109,7 @@
   // Internal links use location.replace(), so normal navigation does not add
   // another Back entry. A single guarded history entry then handles Android
   // / browser Back with our Exit dialog.
-  function initAppBack(){
-    if(location.pathname==='/login'||location.pathname==='/signup')return;
-    try{history.replaceState({glAppRoot:true},'',location.href);history.pushState({glExitGuard:true},'',location.href);}catch(e){}
-    document.addEventListener('click',function(e){
-      var a=e.target.closest&&e.target.closest('a[href]');
-      if(!a||e.defaultPrevented||e.button!==0||e.metaKey||e.ctrlKey||e.shiftKey||e.altKey||a.target==='_blank'||a.hasAttribute('download'))return;
-      var u;try{u=new URL(a.href,location.href)}catch(err){return;}
-      if(u.origin!==location.origin)return;
-      if(u.pathname==='/login'||u.pathname==='/signup')return;
-      e.preventDefault();
-      location.replace(u.href);
-    },true);
-    window.addEventListener('popstate',function(){
-      try{history.pushState({glExitGuard:true},'',location.href);}catch(e){}
-      showExitDialog();
-    });
-  }
-  function showExitDialog(){
-    if(document.getElementById('glExitDialog'))return;
-    var wrap=document.createElement('div');wrap.id='glExitDialog';wrap.style.cssText='position:fixed;inset:0;z-index:100000;background:rgba(0,0,0,.48);display:flex;align-items:center;justify-content:center;padding:20px';
-    wrap.innerHTML='<div style="width:min(360px,92vw);background:#fff8e8;border-radius:20px;padding:22px;box-shadow:0 18px 50px rgba(0,0,0,.3);text-align:center;border:2px solid #f4a300"><div style="font-size:20px;font-weight:900;color:#8b4f00">Exit Gateball Lovers?</div><div style="margin-top:8px;color:#5b514b;font-size:14px;line-height:1.5">Do you want to exit the app?</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px"><button id="glExitNo" style="padding:12px;border:0;border-radius:11px;background:#ddd;color:#333;font-weight:800">NO</button><button id="glExitYes" style="padding:12px;border:0;border-radius:11px;background:linear-gradient(135deg,#ffb52e,#f47700,#d84a00);color:#fff;font-weight:800">YES</button></div></div>';
-    document.body.appendChild(wrap);
-    document.getElementById('glExitNo').onclick=function(){wrap.remove();};
-    document.getElementById('glExitYes').onclick=function(){
-      // Browsers/PWAs do not always permit script-driven window closing.
-      // Try it first; if blocked, move to the PWA start page so the next
-      // Back is outside our history guard.
-      try{window.close();}catch(e){}
+  catch(e){}
       setTimeout(function(){try{location.replace('/');}catch(e){}},120);
     };
   }
