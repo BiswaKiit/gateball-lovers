@@ -105,19 +105,9 @@
     }catch(e){console.warn('Global chat notifications:',e)}
   }
 
-  // Keep the PWA feeling like a single app instead of a stack of web pages.
-  // Internal links use location.replace(), so normal navigation does not add
-  // another Back entry. A single guarded history entry then handles Android
-  // / browser Back with our Exit dialog.
-  catch(e){}
-      setTimeout(function(){try{location.replace('/');}catch(e){}},120);
-    };
-  }
-
   function init(){
     showDashboardNotificationPrompt();
     initGlobalChatNotifications();
-    initAppBack();
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();

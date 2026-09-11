@@ -1,8 +1,17 @@
-GATEBALL LOVERS - NEXT UPDATE
+Gateball Lovers - Notification Prompt Restored / Exit Removed
 
-1. Dashboard shows “Allow Chat Notifications” only while browser notification permission is not chosen. Existing and new members can opt in.
-2. Signup password visibly says minimum 8 characters and browser/backend validation enforces it.
-3. Signup country field is a searchable dropdown and includes Hong Kong and Macau.
-4. App-style Back behavior is added: one Back shows “Do you want to exit the app? Yes / No” instead of walking back through visited pages.
+This package restores the Dashboard "ALLOW CHAT NOTIFICATIONS" prompt for
+members whose browser notification permission is still default or not chosen.
 
-NOTE: Service-worker push handling is prepared. True notification delivery while the PWA is fully closed still requires VAPID keys plus a secure push-subscription store/server sender; the current build does not pretend that browser realtime alone can deliver closed-app notifications.
+The custom Yes/No Exit dialog and its history guard are completely removed.
+Normal browser/PWA navigation is used.
+
+Existing login, signup, email verification, persistent session, profile,
+tournament and chat functionality are not intentionally changed.
+
+IMPORTANT:
+The Dashboard notification permission/subscription UI is present, but true
+closed-app Web Push delivery still requires VAPID server credentials and
+subscription persistence/sending to be configured. The current Flask endpoint
+returns the public key and accepts the subscription but does not yet send
+server-side push messages.
