@@ -1,20 +1,8 @@
-GATEBALL LOVERS - SESSION + CHAT NOTIFICATION UPDATE
+GATEBALL LOVERS - NEXT UPDATE
 
-What changed
-1. Login is now remembered for 30 days unless the member presses LOGOUT.
-2. Supabase access tokens are refreshed automatically when needed, so an expired token should not force a new sign-in.
-3. The PWA service worker is now served from /sw.js at the site root.
-4. Chat notifications can appear as browser/phone notifications while the PWA/browser is running in the background.
-5. A small "Enable chat notifications" button appears after login. Allow notifications once.
-6. Clicking a Gateball Lovers notification opens the Chat page.
+1. Dashboard shows “Allow Chat Notifications” only while browser notification permission is not chosen. Existing and new members can opt in.
+2. Signup password visibly says minimum 8 characters and browser/backend validation enforces it.
+3. Signup country field is a searchable dropdown and includes Hong Kong and Macau.
+4. App-style Back behavior is added: one Back shows “Do you want to exit the app? Yes / No” instead of walking back through visited pages.
 
-IMPORTANT
-- This update does NOT sign a member out when the browser/PWA is closed.
-- The member still signs out only by using the app's LOGOUT action, or when the 30-day remembered session expires / Supabase invalidates the refresh token.
-- True notification delivery after the browser/PWA process has been completely closed requires Web Push server delivery. That is a separate next step; Supabase Realtime alone cannot deliver a notification to a killed browser process.
-
-Deployment
-- Upload/replace the files in this ZIP at the GitHub repository root.
-- Do NOT delete app/, assets/, main.py, or buildozer.spec.
-- Keep Render Start Command: gunicorn gateball_web:app
-- Keep Build Command: pip install -r requirements.txt
+NOTE: Service-worker push handling is prepared. True notification delivery while the PWA is fully closed still requires VAPID keys plus a secure push-subscription store/server sender; the current build does not pretend that browser realtime alone can deliver closed-app notifications.

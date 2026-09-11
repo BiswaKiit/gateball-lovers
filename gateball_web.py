@@ -47,7 +47,7 @@ COUNTRIES = [
     "El Salvador", "Equatorial Guinea", "Eritrea", "Estonia", "Eswatini",
     "Ethiopia", "Fiji", "Finland", "France", "Gabon", "Gambia",
     "Georgia", "Germany", "Ghana", "Greece", "Grenada", "Guatemala",
-    "Guinea", "Guinea-Bissau", "Guyana", "Haiti", "Honduras", "Hungary",
+    "Guinea", "Guinea-Bissau", "Guyana", "Haiti", "Honduras", "Hong Kong", "Hungary",
     "Iceland", "India", "Indonesia", "Iran", "Iraq", "Ireland", "Israel",
     "Italy", "Ivory Coast", "Jamaica", "Japan", "Jordan", "Kazakhstan",
     "Kenya", "Kiribati", "Kuwait", "Kyrgyzstan", "Laos", "Latvia",
@@ -692,6 +692,21 @@ def manifest():
 def service_worker():
     # Serve the service worker from the site root so it can control the whole PWA.
     return send_from_directory(os.path.join(os.path.dirname(__file__), "static"), "sw.js", mimetype="application/javascript")
+
+
+@app.route("/api/push/public-key")
+def push_public_key():
+    # Set VAPID_PUBLIC_KEY on Render when closed-app Web Push sending is enabled.
+    return {"public_key": os.getenv("VAPID_PUBLIC_KEY", "")}
+
+
+@app.route("/api/push/subscribe", methods=["POST"])
+@login_required
+def push_subscribe():
+    # The client-side permission/subscription flow is ready. The subscription
+    # persistence/sender is intentionally inactive until the push database
+    # table and VAPID server credentials are configured.
+    return {"ok": True}
 
 
 @app.route("/api/session-info")
