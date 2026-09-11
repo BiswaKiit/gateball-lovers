@@ -1,0 +1,87 @@
+GATEBALL LOVERS - CLOSED-APP CHAT PUSH SETUP
+
+This update adds the actual Web Push delivery stage.
+Do NOT put the VAPID private key into GitHub.
+
+1) SUPABASE SQL
+----------------
+Open Supabase -> SQL Editor and run:
+    supabase_push_notifications.sql
+
+2) RENDER ENVIRONMENT VARIABLES
+--------------------------------
+In Render -> Gateball Lovers -> Environment, add:
+
+SUPABASE_SERVICE_ROLE_KEY
+  = your Supabase service_role secret key
+
+VAPID_PUBLIC_KEY
+  = the public key in VAPID_PUBLIC_KEY.txt
+
+VAPID_SUBJECT
+  = mailto:biswa.r.mishra@gmail.com
+
+PUSH_WEBHOOK_SECRET
+  = a long random secret (use the value supplied separately)
+
+For the VAPID private key, the safer option is Render -> Environment -> Secret Files:
+  Filename: vapid_private_key.pem
+  Contents: use the separate vapid_private_key.pem file supplied with this package.
+
+The Flask code supports the environment variable VAPID_PRIVATE_KEY too, but a
+Render Secret File is preferable. If using a secret file, set:
+
+VAPID_PRIVATE_KEY_FILE=/etc/secrets/vapid_private_key.pem
+
+3) SUPABASE DATABASE WEBHOOKS
+-----------------------------
+Create TWO Database Webhooks in Supabase.
+Supabase Database Webhooks fire after INSERT and can POST the inserted row to
+an external HTTPS endpoint.
+
+Webhook 1:
+  Name: gateball-direct-chat-push
+  Table: public.direct_messages
+  Event: INSERT
+  URL:
+    https://gateball-lovers.onrender.com/api/push/chat-webhook
+  Method: POST
+  Header:
+    X-Gateball-Push-Secret: <same PUSH_WEBHOOK_SECRET value from Render>
+
+Webhook 2:
+  Name: gateball-group-chat-push
+  Table: public.community_group_messages
+  Event: INSERT
+  URL:
+    https://gateball-lovers.onrender.com/api/push/chat-webhook
+  Method: POST
+  Header:
+    X-Gateball-Push-Secret: <same PUSH_WEBHOOK_SECRET value from Render>
+
+4) DEPLOY
+----------
+Push the updated files to GitHub. Render will deploy the new commit.
+
+5) TEST
+-------
+A member opens Gateball Lovers on Android.
+Dashboard -> Allow Chat Notifications -> Allow.
+
+Then verify the subscription is saved in:
+  Supabase -> Table Editor -> push_subscriptions
+
+Now close/minimize the PWA and have another member send a private chat message.
+The phone should receive:
+  Gateball Lovers
+  [sender name]: [message]
+
+Group chat messages notify all members who have enabled push, except the sender.
+
+IMPORTANT
+---------
+The old realtime in-page chat notifications remain in place. This update adds
+server-side Web Push; it does not replace the working Supabase chat/login system.
+
+If a browser/device subscription becomes invalid, the server removes it when
+Web Push returns 404/410.

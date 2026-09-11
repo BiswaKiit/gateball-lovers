@@ -7,6 +7,12 @@ from html.parser import HTMLParser
 from xml.etree import ElementTree as ET
 
 import requests
+
+try:
+    from pywebpush import webpush, WebPushException
+except Exception:
+    webpush = None
+    WebPushException = Exception
 from flask import Flask, render_template, request, redirect, url_for, session, flash, send_from_directory
 
 # ============================================================
@@ -89,6 +95,8 @@ def supabase_headers(access_token=None):
 def supabase_request(method, path, access_token=None, **kwargs):
     url = SUPABASE_URL + path
     headers = supabase_headers(access_token)
+    extra_headers = kwargs.pop("extra_headers", None) or {}
+    headers.update(extra_headers)
 
     response = requests.request(
         method,
@@ -696,17 +704,210 @@ def service_worker():
 
 @app.route("/api/push/public-key")
 def push_public_key():
-    # Set VAPID_PUBLIC_KEY on Render when closed-app Web Push sending is enabled.
     return {"public_key": os.getenv("VAPID_PUBLIC_KEY", "")}
 
 
 @app.route("/api/push/subscribe", methods=["POST"])
 @login_required
 def push_subscribe():
-    # The client-side permission/subscription flow is ready. The subscription
-    # persistence/sender is intentionally inactive until the push database
-    # table and VAPID server credentials are configured.
-    return {"ok": True}
+    """Save the browser's Web Push subscription for the signed-in member."""
+    if not os.getenv("SUPABASE_SERVICE_ROLE_KEY"):
+        return {"ok": False, "error": "Push service is not configured on the server."}, 503
+
+    data = request.get_json(silent=True) or {}
+    endpoint = str(data.get("endpoint") or "").strip()
+    keys = data.get("keys") or {}
+    p256dh = str(keys.get("p256dh") or "").strip()
+    auth = str(keys.get("auth") or "").strip()
+
+    if not endpoint or not p256dh or not auth:
+        return {"ok": False, "error": "Invalid push subscription."}, 400
+
+    row = {
+        "user_id": str(session.get("user_id")),
+        "endpoint": endpoint,
+        "p256dh": p256dh,
+        "auth": auth,
+    }
+    try:
+        supabase_request(
+            "POST",
+            "/rest/v1/push_subscriptions",
+            access_token=os.getenv("SUPABASE_SERVICE_ROLE_KEY"),
+            params={"on_conflict": "endpoint"},
+            extra_headers={"Prefer": "resolution=merge-duplicates,return=minimal"},
+            json=row,
+        )
+        return {"ok": True}
+    except Exception as exc:
+        print("Push subscription save error:", repr(exc))
+        return {"ok": False, "error": "Could not save push subscription."}, 500
+
+
+def _service_role_headers():
+    key = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
+    if not key:
+        raise RuntimeError("SUPABASE_SERVICE_ROLE_KEY is not configured")
+    return key
+
+
+def _push_rows_for_user(user_id):
+    return supabase_request(
+        "GET",
+        "/rest/v1/push_subscriptions",
+        access_token=_service_role_headers(),
+        params={
+            "select": "id,user_id,endpoint,p256dh,auth",
+            "user_id": f"eq.{user_id}",
+        },
+    ) or []
+
+
+def _delete_push_subscription(subscription_id):
+    try:
+        supabase_request(
+            "DELETE",
+            "/rest/v1/push_subscriptions",
+            access_token=_service_role_headers(),
+            params={"id": f"eq.{subscription_id}"},
+        )
+    except Exception as exc:
+        print("Push subscription cleanup error:", repr(exc))
+
+
+def send_push_to_user(user_id, title, body, target_url="/chat"):
+    """Send a Web Push notification to every registered device for a member."""
+    if webpush is None:
+        print("Web Push unavailable: pywebpush is not installed")
+        return 0
+
+    private_key = os.getenv("VAPID_PRIVATE_KEY", "")
+    if not private_key:
+        key_file = os.getenv("VAPID_PRIVATE_KEY_FILE", "/etc/secrets/vapid_private_key.pem")
+        try:
+            with open(key_file, "r", encoding="utf-8") as fh:
+                private_key = fh.read().strip()
+        except Exception:
+            private_key = ""
+    subject = os.getenv("VAPID_SUBJECT", "mailto:biswa.r.mishra@gmail.com")
+    if not private_key or not os.getenv("VAPID_PUBLIC_KEY"):
+        print("Web Push unavailable: VAPID keys are not configured")
+        return 0
+
+    sent = 0
+    payload = {
+        "title": title,
+        "body": body,
+        "url": target_url,
+        "tag": "gateball-chat",
+    }
+    for row in _push_rows_for_user(user_id):
+        subscription_info = {
+            "endpoint": row.get("endpoint"),
+            "keys": {
+                "p256dh": row.get("p256dh"),
+                "auth": row.get("auth"),
+            },
+        }
+        try:
+            webpush(
+                subscription_info=subscription_info,
+                data=__import__("json").dumps(payload),
+                vapid_private_key=private_key,
+                vapid_claims={"sub": subject},
+            )
+            sent += 1
+        except WebPushException as exc:
+            response = getattr(exc, "response", None)
+            status = getattr(response, "status_code", None)
+            print("Web Push delivery error:", status, repr(exc))
+            if status in (404, 410):
+                _delete_push_subscription(row.get("id"))
+        except Exception as exc:
+            print("Web Push delivery error:", repr(exc))
+    return sent
+
+
+def _profile_name(user_id):
+    try:
+        rows = supabase_request(
+            "GET",
+            "/rest/v1/profiles",
+            access_token=_service_role_headers(),
+            params={"select": "full_name", "id": f"eq.{user_id}", "limit": "1"},
+        ) or []
+        return (rows[0].get("full_name") if rows else None) or "Gateball Member"
+    except Exception:
+        return "Gateball Member"
+
+
+@app.route("/api/push/chat-webhook", methods=["POST"])
+def push_chat_webhook():
+    """Receive a Supabase Database Webhook and fan out chat push notifications."""
+    secret = os.getenv("PUSH_WEBHOOK_SECRET", "")
+    supplied = request.headers.get("X-Gateball-Push-Secret", "")
+    if not secret or supplied != secret:
+        return {"ok": False}, 401
+
+    payload = request.get_json(silent=True) or {}
+    table = str(payload.get("table") or "")
+    record = payload.get("record") or {}
+    sender_id = str(record.get("sender_id") or "")
+    if not sender_id:
+        return {"ok": True, "sent": 0}
+
+    sender_name = _profile_name(sender_id)
+    message = str(record.get("message") or "").strip()
+    body = message[:180] + ("…" if len(message) > 180 else "")
+
+    if table == "direct_messages":
+        receiver_id = str(record.get("receiver_id") or "")
+        if not receiver_id or receiver_id == sender_id:
+            return {"ok": True, "sent": 0}
+        sent = send_push_to_user(
+            receiver_id,
+            "Gateball Lovers",
+            f"💬 {sender_name}: {body or 'New private chat message'}",
+            "/chat",
+        )
+        return {"ok": True, "sent": sent}
+
+    if table == "community_group_messages":
+        # Notify all subscribed members except the sender.
+        try:
+            rows = supabase_request(
+                "GET",
+                "/rest/v1/push_subscriptions",
+                access_token=_service_role_headers(),
+                params={"select": "user_id", "user_id": "neq." + sender_id},
+            ) or []
+            user_ids = sorted({str(r.get("user_id")) for r in rows if r.get("user_id")})
+            total = 0
+            for uid in user_ids:
+                total += send_push_to_user(
+                    uid,
+                    "Gateball Lovers Community",
+                    f"💬 {sender_name}: {body or 'New community chat message'}",
+                    "/chat/group",
+                )
+            return {"ok": True, "sent": total}
+        except Exception as exc:
+            print("Group chat push error:", repr(exc))
+            return {"ok": False, "error": "Group push failed."}, 500
+
+    return {"ok": True, "sent": 0}
+
+
+@app.route("/api/push/test", methods=["POST"])
+@login_required
+def push_test():
+    sent = send_push_to_user(
+        str(session.get("user_id")),
+        "Gateball Lovers",
+        "🔔 Push notifications are working!",
+        "/dashboard",
+    )
+    return {"ok": sent > 0, "sent": sent}
 
 
 @app.route("/api/session-info")
