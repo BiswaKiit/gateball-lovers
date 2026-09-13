@@ -1,4 +1,4 @@
-const CACHE='gateball-lovers-v4';
+const CACHE='gateball-lovers-v5-pushfix2';
 self.addEventListener('install',event=>event.waitUntil(self.skipWaiting()));
 self.addEventListener('activate',event=>event.waitUntil(self.clients.claim()));
 self.addEventListener('fetch',event=>{
