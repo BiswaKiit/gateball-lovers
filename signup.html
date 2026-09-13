@@ -17,6 +17,14 @@ label{font-weight:bold;font-size:13px}.grid{display:grid;grid-template-columns:1
 .logo{width:88px;height:88px;object-fit:contain}.center{text-align:center}
 .bottom{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(430px,100%);display:grid;grid-template-columns:repeat(4,1fr);background:#fff;border-top:1px solid #ddd;z-index:10}
 .bottom a{padding:11px 4px;text-align:center;text-decoration:none;color:#555;font-size:12px}.bottom a.active{color:#d88900;font-weight:bold}
+.field-hint{font-size:12px;color:#8a5a00;margin:-5px 0 10px 2px}
+.country-picker{position:relative;margin:5px 0 10px}
+.country-picker input[type=text]{margin:0}
+.country-options{display:none;position:absolute;left:0;right:0;top:calc(100% + 2px);max-height:230px;overflow:auto;background:#fff;border:2px solid #e4bd78;border-radius:10px;box-shadow:0 8px 20px rgba(0,0,0,.16);z-index:30}
+.country-option{padding:11px 12px;font-size:14px;cursor:pointer;border-bottom:1px solid #f1e4cf}
+.country-option:last-child{border-bottom:0}.country-option:hover,.country-option.active{background:#fff0c7;color:#8b4f00;font-weight:bold}
+.country-picker.open .country-options{display:block}
+.password-ok{color:#16803b!important}.password-bad{color:#b3261e!important}
 </style>
 
 <link rel="manifest" href="/manifest.json">
@@ -26,8 +34,40 @@ label{font-weight:bold;font-size:13px}.grid{display:grid;grid-template-columns:1
 </head>
 <body><div class="page"><div class="header"><h1>Create Account</h1><p>Join the Gateball Family</p></div><div class="content"><div class="card">
 <form method="post" action="/signup"><label>Full Name</label><input name="full_name" required>
-<label>Email</label><input name="email" type="email" required><label>Password</label><input name="password" type="password" required>
-<label>Country</label><input name="country"><label>Phone</label><input name="phone" type="tel">
+<label>Email</label><input name="email" type="email" required><label>Password</label>
+<input id="signupPassword" name="password" type="password" minlength="8" required autocomplete="new-password" placeholder="Minimum 8 characters">
+<div class="field-hint">Password must be at least 8 characters.</div>
+<label>Country</label>
+<div class="country-picker" id="countryPicker">
+  <input id="countrySearch" type="text" autocomplete="off" placeholder="Search or select your country" aria-label="Search country">
+  <input id="countryValue" name="country" type="hidden" required>
+  <div id="countryOptions" class="country-options" role="listbox"></div>
+</div><label>Phone</label><input name="phone" type="tel">
 <label>Role</label><select name="role"><option>Player</option><option>Organizer</option></select>
 <button class="btn" type="submit">CREATE ACCOUNT</button></form>
-<a class="btn secondary" href="/">BACK TO LOGIN</a></div><div class="creator">Created by Biswa Ranjan Mishra</div></div></div></body></html>
+<a class="btn secondary" href="/">BACK TO LOGIN</a></div><div class="creator">Created by Biswa Ranjan Mishra</div></div></div><script>
+(function(){
+  const countries={{ countries|tojson }};
+  const picker=document.getElementById('countryPicker');
+  const search=document.getElementById('countrySearch');
+  const value=document.getElementById('countryValue');
+  const options=document.getElementById('countryOptions');
+  const form=search.closest('form');
+  function render(){
+    const q=(search.value||'').trim().toLowerCase();
+    const list=countries.filter(c=>!q||c.toLowerCase().includes(q));
+    options.innerHTML=list.length?list.map(c=>'<div class="country-option" role="option" data-value="'+c.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')+'">'+c.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</div>').join(''):'<div class="country-option">No country found</div>';
+    options.querySelectorAll('.country-option[data-value]').forEach(el=>el.addEventListener('click',function(){value.value=this.dataset.value;search.value=this.dataset.value;picker.classList.remove('open');}));
+  }
+  search.addEventListener('focus',function(){picker.classList.add('open');render();});
+  search.addEventListener('input',function(){value.value='';picker.classList.add('open');render();});
+  document.addEventListener('click',function(e){if(!picker.contains(e.target))picker.classList.remove('open');});
+  form.addEventListener('submit',function(e){
+    const pw=document.getElementById('signupPassword');
+    if(pw.value.length<8){e.preventDefault();pw.focus();return;}
+    if(!value.value){e.preventDefault();search.focus();alert('Please select your country from the list.');}
+  });
+  const pw=document.getElementById('signupPassword');
+  pw.addEventListener('input',function(){pw.classList.toggle('password-ok',pw.value.length>=8);pw.classList.toggle('password-bad',pw.value.length>0&&pw.value.length<8);});
+})();
+</script></body></html>

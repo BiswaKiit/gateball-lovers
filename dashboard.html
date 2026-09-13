@@ -372,6 +372,12 @@
         </div>
     </div>
 
+    <section id="notificationPrompt" class="section" style="display:none;margin-top:0;border:2px solid #f4a300!important;background:linear-gradient(135deg,#fff4d5,#ffe6ae)!important;">
+        <div style="font-size:17px;font-weight:800;color:#8b4f00;">🔔 Chat Notifications</div>
+        <div id="notificationPromptText" style="font-size:13px;line-height:1.5;color:#5b514b;margin-top:6px;">Enable notifications to receive new chat alerts in your mobile notification bar.</div>
+        <button id="dashboardNotifyBtn" type="button" class="btn" style="margin-top:10px;width:100%;">🔔 ALLOW CHAT NOTIFICATIONS</button>
+    </section>
+
     {% with messages=get_flashed_messages() %}
         {% if messages %}
             <div style="padding:0 12px;">

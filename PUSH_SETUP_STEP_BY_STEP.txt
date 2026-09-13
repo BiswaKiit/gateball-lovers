@@ -85,3 +85,19 @@ server-side Web Push; it does not replace the working Supabase chat/login system
 
 If a browser/device subscription becomes invalid, the server removes it when
 Web Push returns 404/410.
+
+
+STAGE 2 MOBILE PUSH FIX
+------------------------
+The web app now reports push subscription failures visibly on the Dashboard instead of silently ignoring them. After Android Chrome grants notification permission, the app registers the device subscription with /api/push/subscribe and shows a SEND TEST NOTIFICATION button.
+
+Required Render environment variables:
+- SUPABASE_URL
+- SUPABASE_PUBLISHABLE_KEY
+- SUPABASE_SERVICE_ROLE_KEY
+- VAPID_PUBLIC_KEY
+- VAPID_PRIVATE_KEY (or VAPID_PRIVATE_KEY_FILE)
+- VAPID_SUBJECT
+- PUSH_WEBHOOK_SECRET
+
+Do not expose SUPABASE_SERVICE_ROLE_KEY or VAPID_PRIVATE_KEY in browser code.

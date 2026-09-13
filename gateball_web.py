@@ -898,16 +898,39 @@ def push_chat_webhook():
     return {"ok": True, "sent": 0}
 
 
+@app.route("/api/push/status")
+@login_required
+def push_status():
+    """Safe diagnostics for the current member's Web Push registration."""
+    try:
+        rows = _push_rows_for_user(str(session.get("user_id"))) if os.getenv("SUPABASE_SERVICE_ROLE_KEY") else []
+        return {
+            "ok": True,
+            "subscription_count": len(rows),
+            "service_role_configured": bool(os.getenv("SUPABASE_SERVICE_ROLE_KEY")),
+            "vapid_public_configured": bool(os.getenv("VAPID_PUBLIC_KEY")),
+            "vapid_private_configured": bool(os.getenv("VAPID_PRIVATE_KEY") or os.getenv("VAPID_PRIVATE_KEY_FILE")),
+            "pywebpush_installed": webpush is not None,
+        }
+    except Exception as exc:
+        print("Push status error:", repr(exc))
+        return {"ok": False, "error": str(exc), "subscription_count": 0}, 500
+
+
 @app.route("/api/push/test", methods=["POST"])
 @login_required
 def push_test():
-    sent = send_push_to_user(
-        str(session.get("user_id")),
-        "Gateball Lovers",
-        "🔔 Push notifications are working!",
-        "/dashboard",
-    )
-    return {"ok": sent > 0, "sent": sent}
+    try:
+        sent = send_push_to_user(
+            str(session.get("user_id")),
+            "Gateball Lovers",
+            "🔔 Push notifications are working!",
+            "/dashboard",
+        )
+        return {"ok": sent > 0, "sent": sent, "error": None if sent > 0 else "No registered push subscription was found or delivery failed."}
+    except Exception as exc:
+        print("Push test error:", repr(exc))
+        return {"ok": False, "sent": 0, "error": str(exc)}, 500
 
 
 @app.route("/api/session-info")
