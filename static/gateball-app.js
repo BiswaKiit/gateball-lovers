@@ -1,10 +1,26 @@
 (function(){
-  // Gateball Lovers PWA helpers: service worker, dashboard notification opt-in,
+  // Gateball Lovers PWA helpers: service worker, reliable Web Push registration,
   // authenticated chat realtime alerts, and app-style Android back handling.
+  var pushState = {registered:false, lastError:''};
+
+  function setPushText(message){
+    var el=document.getElementById('notificationPromptText');
+    if(el) el.textContent=message;
+  }
+
+  async function ensureServiceWorker(){
+    if(!('serviceWorker' in navigator)) throw new Error('This browser does not support service workers.');
+    var reg=await navigator.serviceWorker.ready;
+    if(!reg) throw new Error('Service worker is not ready yet.');
+    return reg;
+  }
+
   try{
     if('serviceWorker' in navigator){
       window.addEventListener('load',function(){
-        navigator.serviceWorker.register('/sw.js').catch(function(e){console.warn('PWA service worker:',e);});
+        navigator.serviceWorker.register('/sw.js?v=20260913-pushfix2',{scope:'/'}).then(function(reg){
+          try{ reg.update(); }catch(e){}
+        }).catch(function(e){console.warn('PWA service worker:',e);});
       });
     }
   }catch(e){console.warn(e)}
@@ -14,53 +30,119 @@
     var box=document.getElementById('notificationPrompt');
     var btn=document.getElementById('dashboardNotifyBtn');
     var text=document.getElementById('notificationPromptText');
-    if(!box||!btn||!('Notification' in window)) return;
+    if(!box||!btn) return;
 
-    if(Notification.permission === 'granted') { box.style.display='none'; return; }
-    if(Notification.permission === 'denied') {
-      box.style.display='block';
+    box.style.display='block';
+
+    if(!('Notification' in window)){
       btn.style.display='none';
-      text.textContent='Notifications are blocked for this browser. Please enable Gateball Lovers notifications in your browser/site settings.';
+      text.textContent='⚠️ This browser does not expose the Notification API. Open Gateball Lovers in Chrome and check Android site notification permissions.';
       return;
     }
 
-    // permission === default: show to every member who has not chosen yet,
-    // including both new and existing members.
-    box.style.display='block';
+    if(Notification.permission === 'granted'){
+      btn.style.display='block';
+      btn.disabled=false;
+      btn.textContent='🔔 ENABLE / TEST CHAT NOTIFICATIONS';
+      text.textContent='Notifications are allowed. Registering this phone for background chat notifications...';
+      btn.onclick=function(){ subscribeForPushIfConfigured(true); };
+      subscribeForPushIfConfigured(false);
+      return;
+    }
+    if(Notification.permission === 'denied') {
+      btn.style.display='none';
+      text.textContent='Notifications are blocked for this browser. Enable Gateball Lovers notifications in Android/Chrome site settings, then return here.';
+      return;
+    }
+
     btn.style.display='block';
+    btn.disabled=false;
+    btn.textContent='🔔 ALLOW CHAT NOTIFICATIONS';
+    text.textContent='Enable notifications to receive new chat alerts even when Gateball Lovers is closed.';
     btn.onclick=function(){
-      btn.disabled=true;
-      btn.textContent='Requesting permission...';
+      btn.disabled=true; btn.textContent='Requesting permission...';
       Notification.requestPermission().then(function(result){
         if(result==='granted'){
-          box.style.display='none';
-          subscribeForPushIfConfigured();
+          subscribeForPushIfConfigured(true);
         }else if(result==='denied'){
           btn.style.display='none';
-          text.textContent='Notifications are blocked for this browser. You can enable them later in site/browser settings.';
+          text.textContent='Notifications are blocked. Enable them in Android/Chrome site settings and return here.';
         }else{
-          btn.disabled=false;btn.textContent='🔔 ALLOW CHAT NOTIFICATIONS';
+          btn.disabled=false; btn.textContent='🔔 ALLOW CHAT NOTIFICATIONS';
         }
-      }).catch(function(){btn.disabled=false;btn.textContent='🔔 ALLOW CHAT NOTIFICATIONS';});
+      }).catch(function(err){
+        console.error('Notification permission error:',err);
+        btn.disabled=false; btn.textContent='🔔 ALLOW CHAT NOTIFICATIONS';
+        text.textContent='Could not request notification permission: '+(err.message||err);
+      });
     };
   }
 
-  async function subscribeForPushIfConfigured(){
-    // The current build registers the service worker and permission. Full
-    // closed-app Web Push delivery also needs a VAPID public key/server sender.
-    // Keep this hook ready without breaking normal chat/realtime operation.
+  async function subscribeForPushIfConfigured(showTest){
+    var btn=document.getElementById('dashboardNotifyBtn');
     try{
-      if(!('PushManager' in window)||!('serviceWorker' in navigator)) return;
+      if(!('serviceWorker' in navigator)) throw new Error('Service Worker is not supported by this browser.');
+      if(!('PushManager' in window)) throw new Error('Web Push is not supported by this browser.');
+      if(!('Notification' in window) || Notification.permission!=='granted') throw new Error('Notification permission is not granted.');
+      if(btn){btn.disabled=true;btn.textContent='Registering this phone...';}
+      setPushText('Connecting to the Gateball Lovers push service...');
+
       var r=await fetch('/api/push/public-key',{credentials:'same-origin',cache:'no-store'});
-      if(!r.ok)return;
+      if(!r.ok) throw new Error('Push public-key request failed ('+r.status+').');
       var info=await r.json();
-      if(!info.public_key)return;
-      var reg=await navigator.serviceWorker.ready;
+      if(!info.public_key) throw new Error('Server VAPID public key is missing.');
+
+      var reg=await ensureServiceWorker();
       var sub=await reg.pushManager.getSubscription();
-      if(!sub) sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:base64UrlToUint8Array(info.public_key)});
-      await fetch('/api/push/subscribe',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify(sub)});
-    }catch(e){console.warn('Push subscription:',e)}
+      if(!sub){
+        sub=await reg.pushManager.subscribe({
+          userVisibleOnly:true,
+          applicationServerKey:base64UrlToUint8Array(info.public_key)
+        });
+      }
+      if(!sub || !sub.endpoint) throw new Error('Browser did not return a valid push subscription.');
+
+      var save=await fetch('/api/push/subscribe',{
+        method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify(sub.toJSON ? sub.toJSON() : sub)
+      });
+      var saveText=await save.text();
+      var saveInfo={}; try{saveInfo=JSON.parse(saveText)}catch(e){}
+      if(!save.ok || !saveInfo.ok){
+        var detail=saveInfo.error||('HTTP '+save.status);
+        throw new Error('Server could not save this phone subscription: '+detail);
+      }
+
+      pushState.registered=true; pushState.lastError='';
+      setPushText('✅ This phone is registered for background chat notifications. Keep notifications allowed in Android/Chrome.');
+      if(btn){btn.disabled=false;btn.textContent='🔔 SEND TEST NOTIFICATION';btn.onclick=function(){sendPushTest();};}
+      if(showTest) await sendPushTest();
+      return true;
+    }catch(e){
+      pushState.lastError=String(e&&e.message||e);
+      console.error('Push subscription:',e);
+      setPushText('❌ Push setup failed: '+pushState.lastError);
+      if(btn){btn.disabled=false;btn.textContent='🔁 RETRY CHAT NOTIFICATIONS';btn.onclick=function(){subscribeForPushIfConfigured(false);};}
+      return false;
+    }
   }
+
+  async function sendPushTest(){
+    var btn=document.getElementById('dashboardNotifyBtn');
+    try{
+      if(btn){btn.disabled=true;btn.textContent='Sending test...';}
+      var r=await fetch('/api/push/test',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:'{}'});
+      var txt=await r.text(), data={}; try{data=JSON.parse(txt)}catch(e){}
+      if(!r.ok || !data.ok) throw new Error(data.error||('Push test failed ('+r.status+'). Sent: '+(data.sent||0)));
+      setPushText('✅ Test push sent. If this phone is closed/backgrounded, the notification should appear in the Android notification bar.');
+      if(btn){btn.disabled=false;btn.textContent='🔔 SEND TEST AGAIN';btn.onclick=function(){sendPushTest();};}
+    }catch(e){
+      console.error('Push test:',e);
+      setPushText('❌ Test push failed: '+(e.message||e));
+      if(btn){btn.disabled=false;btn.textContent='🔁 RETRY PUSH TEST';btn.onclick=function(){sendPushTest();};}
+    }
+  }
+
   function base64UrlToUint8Array(base64String){
     var padding='='.repeat((4-base64String.length%4)%4),base64=(base64String+padding).replace(/-/g,'+').replace(/_/g,'/');
     var raw=atob(base64);var out=new Uint8Array(raw.length);for(var i=0;i<raw.length;i++)out[i]=raw.charCodeAt(i);return out;
@@ -72,7 +154,7 @@
       if(navigator.serviceWorker){
         navigator.serviceWorker.ready.then(function(reg){
           reg.showNotification(title,{body:body,icon:'/static/images/icon-192.png',badge:'/static/images/icon-192.png',tag:'gateball-chat',data:{url:url||'/chat'},renotify:true});
-        }).catch(function(){});
+        }).catch(function(e){console.warn('Notification:',e)});
       }
     }catch(e){console.warn('Notification:',e)}
   }
@@ -86,7 +168,7 @@
       if(!info.logged_in || !info.access_token || !info.user_id || !info.supabase_url || !info.supabase_key) return;
 
       showDashboardNotificationPrompt();
-      if(Notification.permission==='granted') subscribeForPushIfConfigured();
+      if(Notification.permission==='granted') subscribeForPushIfConfigured(false);
 
       if(!window.supabase){
         await new Promise(function(resolve,reject){var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';s.onload=resolve;s.onerror=reject;document.head.appendChild(s);});
