@@ -18,7 +18,7 @@
   try{
     if('serviceWorker' in navigator){
       window.addEventListener('load',function(){
-        navigator.serviceWorker.register('/sw.js',{scope:'/'}).then(function(reg){
+        navigator.serviceWorker.register('/sw.js?v=20260913-pushfix2',{scope:'/'}).then(function(reg){
           try{ reg.update(); }catch(e){}
         }).catch(function(e){console.warn('PWA service worker:',e);});
       });
@@ -30,9 +30,16 @@
     var box=document.getElementById('notificationPrompt');
     var btn=document.getElementById('dashboardNotifyBtn');
     var text=document.getElementById('notificationPromptText');
-    if(!box||!btn||!('Notification' in window)) return;
+    if(!box||!btn) return;
 
     box.style.display='block';
+
+    if(!('Notification' in window)){
+      btn.style.display='none';
+      text.textContent='⚠️ This browser does not expose the Notification API. Open Gateball Lovers in Chrome and check Android site notification permissions.';
+      return;
+    }
+
     if(Notification.permission === 'granted'){
       btn.style.display='block';
       btn.disabled=false;
@@ -74,6 +81,7 @@
   async function subscribeForPushIfConfigured(showTest){
     var btn=document.getElementById('dashboardNotifyBtn');
     try{
+      if(!('serviceWorker' in navigator)) throw new Error('Service Worker is not supported by this browser.');
       if(!('PushManager' in window)) throw new Error('Web Push is not supported by this browser.');
       if(!('Notification' in window) || Notification.permission!=='granted') throw new Error('Notification permission is not granted.');
       if(btn){btn.disabled=true;btn.textContent='Registering this phone...';}
