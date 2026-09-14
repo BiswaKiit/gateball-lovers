@@ -13,6 +13,7 @@ try:
 except Exception:
     webpush = None
     WebPushException = Exception
+from cryptography.hazmat.primitives import serialization
 from flask import Flask, render_template, request, redirect, url_for, session, flash, send_from_directory
 
 # ============================================================
@@ -690,6 +691,49 @@ def load_gateball_news():
 # ============================================================
 # LOGIN / SIGN UP / LOGOUT
 # ============================================================
+
+
+@app.route("/api/push/key-status", methods=["GET"])
+def push_key_status():
+    """Safe VAPID private-key diagnostic; never exposes key material."""
+    try:
+        key_file = os.environ.get("VAPID_PRIVATE_KEY_FILE", "/etc/secrets/vapid_private_key.pem")
+        exists = os.path.exists(key_file)
+        if not exists:
+            return jsonify({
+                "private_key_file_exists": False,
+                "private_key_valid": False,
+                "error": "VAPID private key file not found"
+            }), 200
+
+        raw = open(key_file, "rb").read()
+        try:
+            key = serialization.load_pem_private_key(raw, password=None)
+            curve = getattr(getattr(key, "curve", None), "name", None)
+            valid = curve == "secp256r1"
+            return jsonify({
+                "private_key_file_exists": True,
+                "private_key_valid": valid,
+                "curve": curve,
+                "pem_bytes": len(raw),
+                "error": None if valid else "Private key is valid PEM but is not the expected P-256/secp256r1 key"
+            }), 200
+        except Exception as e:
+            return jsonify({
+                "private_key_file_exists": True,
+                "private_key_valid": False,
+                "curve": None,
+                "pem_bytes": len(raw),
+                "error_type": type(e).__name__,
+                "error": str(e)[:300]
+            }), 200
+    except Exception as e:
+        return jsonify({
+            "private_key_file_exists": False,
+            "private_key_valid": False,
+            "error_type": type(e).__name__,
+            "error": str(e)[:300]
+        }), 200
 
 @app.route("/manifest.json")
 def manifest():
