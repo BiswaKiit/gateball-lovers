@@ -14,7 +14,7 @@ except Exception:
     webpush = None
     WebPushException = Exception
 from cryptography.hazmat.primitives import serialization
-from flask import Flask, render_template, request, redirect, url_for, session, flash, send_from_directory
+from flask import Flask, render_template, request, redirect, url_for, session, flash, send_from_directory, jsonify
 
 # ============================================================
 # GATEBALL LOVERS - FLASK APP
