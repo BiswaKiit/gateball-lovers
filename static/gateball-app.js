@@ -91,15 +91,39 @@
       if(!r.ok) throw new Error('Push public-key request failed ('+r.status+').');
       var info=await r.json();
       if(!info.public_key) throw new Error('Server VAPID public key is missing.');
+       var reg=await ensureServiceWorker();
+       var sub=await reg.pushManager.getSubscription();
 
-      var reg=await ensureServiceWorker();
-      var sub=await reg.pushManager.getSubscription();
-      if(!sub){
-        sub=await reg.pushManager.subscribe({
-          userVisibleOnly:true,
-          applicationServerKey:base64UrlToUint8Array(info.public_key)
-        });
-      }
+       // A browser PushSubscription is bound to the VAPID public key used
+       // when it was created. If the server's VAPID key was rotated, an
+       // existing browser subscription must be unsubscribed before creating
+       // a new one. Deleting only the Supabase row is not enough.
+       if(sub && sub.options && sub.options.applicationServerKey){
+         try{
+           var currentKey=base64UrlToUint8Array(info.public_key);
+           var existingKey=new Uint8Array(sub.options.applicationServerKey);
+           var sameKey=(currentKey.length===existingKey.length);
+           if(sameKey){
+             for(var ki=0;ki<currentKey.length;ki++){
+               if(currentKey[ki]!==existingKey[ki]){ sameKey=false; break; }
+             }
+           }
+           if(!sameKey){
+             await sub.unsubscribe();
+             sub=null;
+           }
+         }catch(keyCheckErr){
+           try{ await sub.unsubscribe(); }catch(ignoreErr){}
+           sub=null;
+         }
+       }
+
+       if(!sub){
+         sub=await reg.pushManager.subscribe({
+           userVisibleOnly:true,
+           applicationServerKey:base64UrlToUint8Array(info.public_key)
+         });
+       }
       if(!sub || !sub.endpoint) throw new Error('Browser did not return a valid push subscription.');
 
       var save=await fetch('/api/push/subscribe',{
