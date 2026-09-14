@@ -693,6 +693,20 @@ def load_gateball_news():
 # ============================================================
 
 
+
+def _load_vapid_private_key_pem():
+    """Load Render's VAPID EC key and return canonical PKCS8 PEM bytes."""
+    key_file = os.environ.get("VAPID_PRIVATE_KEY_FILE", "/etc/secrets/vapid_private_key.pem")
+    raw = open(key_file, "rb").read()
+    key = serialization.load_pem_private_key(raw, password=None)
+    if getattr(getattr(key, "curve", None), "name", None) != "secp256r1":
+        raise RuntimeError("VAPID private key must use secp256r1/P-256")
+    return key.private_bytes(
+        serialization.Encoding.PEM,
+        serialization.PrivateFormat.PKCS8,
+        serialization.NoEncryption(),
+    )
+
 @app.route("/api/push/key-status", methods=["GET"])
 def push_key_status():
     """Safe VAPID private-key diagnostic; never exposes key material."""
@@ -857,7 +871,7 @@ def send_push_to_user(user_id, title, body, target_url="/chat"):
             webpush(
                 subscription_info=subscription_info,
                 data=__import__("json").dumps(payload),
-                vapid_private_key=private_key,
+                vapid_private_key=_load_vapid_private_key_pem(),
                 vapid_claims={"sub": subject},
             )
             sent += 1
