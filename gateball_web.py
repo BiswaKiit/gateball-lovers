@@ -871,7 +871,7 @@ def send_push_to_user(user_id, title, body, target_url="/chat"):
             webpush(
                 subscription_info=subscription_info,
                 data=__import__("json").dumps(payload),
-                vapid_private_key=_load_vapid_private_key_pem(),
+                vapid_private_key=key_file,
                 vapid_claims={"sub": subject},
             )
             sent += 1
