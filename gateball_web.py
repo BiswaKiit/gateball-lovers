@@ -921,40 +921,12 @@ def push_chat_webhook():
     if table == "direct_messages":
         receiver_id = str(record.get("receiver_id") or "")
         if not receiver_id or receiver_id == sender_id:
-            print(
-                "CHAT PUSH DIAG: skipped direct message; "
-                f"receiver_present={bool(receiver_id)} "
-                f"self_message={receiver_id == sender_id}"
-            )
             return {"ok": True, "sent": 0}
-
-        # Temporary safe diagnostics. Never print full UUIDs, endpoints,
-        # auth keys, message text, or VAPID secrets.
-        receiver_tag = receiver_id[:8]
-        try:
-            matching_rows = _push_rows_for_user(receiver_id)
-            print(
-                "CHAT PUSH DIAG: "
-                f"table=direct_messages receiver={receiver_tag}... "
-                f"subscriptions_found={len(matching_rows)}"
-            )
-        except Exception as exc:
-            print(
-                "CHAT PUSH DIAG: subscription_lookup_error "
-                f"receiver={receiver_tag}... error={repr(exc)}"
-            )
-
         sent = send_push_to_user(
             receiver_id,
             "Gateball Lovers",
             f"💬 {sender_name}: {body or 'New private chat message'}",
             "/chat",
-        )
-
-        print(
-            "CHAT PUSH DIAG: "
-            f"receiver={receiver_tag}... "
-            f"push_sent={sent}"
         )
         return {"ok": True, "sent": sent}
 
