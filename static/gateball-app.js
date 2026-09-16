@@ -26,7 +26,7 @@
   }catch(e){console.warn(e)}
 
   function showDashboardNotificationPrompt(){
-    if(location.pathname !== '/dashboard') return;
+    if(location.pathname !== '/settings') return;
     var box=document.getElementById('notificationPrompt');
     var btn=document.getElementById('dashboardNotifyBtn');
     var text=document.getElementById('notificationPromptText');
@@ -91,39 +91,15 @@
       if(!r.ok) throw new Error('Push public-key request failed ('+r.status+').');
       var info=await r.json();
       if(!info.public_key) throw new Error('Server VAPID public key is missing.');
-       var reg=await ensureServiceWorker();
-       var sub=await reg.pushManager.getSubscription();
 
-       // A browser PushSubscription is bound to the VAPID public key used
-       // when it was created. If the server's VAPID key was rotated, an
-       // existing browser subscription must be unsubscribed before creating
-       // a new one. Deleting only the Supabase row is not enough.
-       if(sub && sub.options && sub.options.applicationServerKey){
-         try{
-           var currentKey=base64UrlToUint8Array(info.public_key);
-           var existingKey=new Uint8Array(sub.options.applicationServerKey);
-           var sameKey=(currentKey.length===existingKey.length);
-           if(sameKey){
-             for(var ki=0;ki<currentKey.length;ki++){
-               if(currentKey[ki]!==existingKey[ki]){ sameKey=false; break; }
-             }
-           }
-           if(!sameKey){
-             await sub.unsubscribe();
-             sub=null;
-           }
-         }catch(keyCheckErr){
-           try{ await sub.unsubscribe(); }catch(ignoreErr){}
-           sub=null;
-         }
-       }
-
-       if(!sub){
-         sub=await reg.pushManager.subscribe({
-           userVisibleOnly:true,
-           applicationServerKey:base64UrlToUint8Array(info.public_key)
-         });
-       }
+      var reg=await ensureServiceWorker();
+      var sub=await reg.pushManager.getSubscription();
+      if(!sub){
+        sub=await reg.pushManager.subscribe({
+          userVisibleOnly:true,
+          applicationServerKey:base64UrlToUint8Array(info.public_key)
+        });
+      }
       if(!sub || !sub.endpoint) throw new Error('Browser did not return a valid push subscription.');
 
       var save=await fetch('/api/push/subscribe',{
@@ -159,6 +135,9 @@
       var txt=await r.text(), data={}; try{data=JSON.parse(txt)}catch(e){}
       if(!r.ok || !data.ok) throw new Error(data.error||('Push test failed ('+r.status+'). Sent: '+(data.sent||0)));
       setPushText('✅ Test push sent. If this phone is closed/backgrounded, the notification should appear in the Android notification bar.');
+      try{localStorage.setItem('gl_push_tested','1');}catch(e){}
+      var firstNotice=document.getElementById('notificationPromptDashboard');
+      if(firstNotice) firstNotice.style.display='none';
       if(btn){btn.disabled=false;btn.textContent='🔔 SEND TEST AGAIN';btn.onclick=function(){sendPushTest();};}
     }catch(e){
       console.error('Push test:',e);
@@ -183,6 +162,15 @@
     }catch(e){console.warn('Notification:',e)}
   }
 
+  function showFirstTimeDashboardNotice(){
+    if(location.pathname !== '/dashboard') return;
+    var box=document.getElementById('notificationPrompt');
+    if(!box) return;
+    var tested=false;
+    try{tested=localStorage.getItem('gl_push_tested')==='1';}catch(e){}
+    box.style.display=tested?'none':'block';
+  }
+
   async function initGlobalChatNotifications(){
     if(location.pathname === '/login' || location.pathname === '/signup') return;
     try{
@@ -192,6 +180,7 @@
       if(!info.logged_in || !info.access_token || !info.user_id || !info.supabase_url || !info.supabase_key) return;
 
       showDashboardNotificationPrompt();
+      showFirstTimeDashboardNotice();
       if(Notification.permission==='granted') subscribeForPushIfConfigured(false);
 
       if(!window.supabase){
@@ -213,6 +202,7 @@
 
   function init(){
     showDashboardNotificationPrompt();
+    showFirstTimeDashboardNotice();
     initGlobalChatNotifications();
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
