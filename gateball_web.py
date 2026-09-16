@@ -2035,6 +2035,12 @@ def direct_chat(user_id):
     )
 
 
+@app.route("/settings")
+@login_required
+def settings():
+    return render_template("settings.html")
+
+
 # ============================================================
 # PROFILE
 # ============================================================
@@ -2048,6 +2054,13 @@ def profile():
         members = load_members()
     except Exception:
         members = []
+
+    requested_role = str(request.args.get("role") or "").strip().lower()
+    if requested_role in ("player", "organizer"):
+        members = [
+            m for m in members
+            if str(m.get("role") or "").strip().lower() == requested_role
+        ]
 
     return render_template(
         "profile.html",
