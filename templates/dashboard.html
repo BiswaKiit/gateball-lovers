@@ -39,9 +39,50 @@
             font-size: 22px;
         }
 
+        .top-header {
+            position: relative;
+        }
+
         .top-header p {
             margin: 4px 0 0;
             font-size: 12px;
+        }
+
+        .settings-link {
+            position: absolute;
+            right: 12px;
+            top: 14px;
+            width: 38px;
+            height: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: rgba(255,255,255,.18);
+            color: white;
+            text-decoration: none;
+            font-size: 22px;
+        }
+
+        .first-time-notice {
+            margin: 0 12px 12px;
+            padding: 12px 14px;
+            border: 1px solid #f4a300;
+            border-radius: 13px;
+            background: linear-gradient(135deg,#fff7df,#ffedbd);
+            color: #684900;
+            box-shadow: 0 2px 8px rgba(0,0,0,.05);
+        }
+
+        .first-time-notice strong {
+            display: block;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        .first-time-notice span {
+            font-size: 12px;
+            line-height: 1.45;
         }
 
         .welcome {
@@ -79,6 +120,16 @@
             border-radius: 14px;
             padding: 12px;
             text-align: center;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+            cursor: pointer;
+            transition: transform .15s ease, box-shadow .15s ease;
+        }
+
+        .stat:hover, .stat:active {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,0,0,.08);
         }
 
         .stat-icon {
@@ -343,7 +394,7 @@
 
 <link rel="manifest" href="/manifest.json">
 <link rel="stylesheet" href="/static/gateball-theme.css">
-<script defer src="/static/gateball-app.js?v=20260914-vapid-mismatch-fix"></script>
+<script defer src="/static/gateball-app.js?v=20260916-settings1"></script>
 <meta name="theme-color" content="#F47700">
 </head>
 
@@ -361,6 +412,7 @@
 <div class="app">
 
     <header class="top-header">
+        <a class="settings-link" href="{{ url_for('settings') }}" aria-label="Settings">⚙️</a>
         <h1>Gateball Lovers</h1>
         <p>Connect. Compete. Celebrate.</p>
     </header>
@@ -372,10 +424,10 @@
         </div>
     </div>
 
-    <section id="notificationPrompt" class="section" style="display:block;margin-top:0;border:2px solid #f4a300!important;background:linear-gradient(135deg,#fff4d5,#ffe6ae)!important;">
-        <div style="font-size:17px;font-weight:800;color:#8b4f00;">🔔 Chat Notifications</div>
-        <div id="notificationPromptText" style="font-size:13px;line-height:1.5;color:#5b514b;margin-top:6px;">Enable notifications to receive new chat alerts in your mobile notification bar.</div>
-        <button id="dashboardNotifyBtn" type="button" class="btn" style="margin-top:10px;width:100%;">🔔 ALLOW CHAT NOTIFICATIONS</button>
+    <section id="notificationPrompt" class="first-time-notice" style="display:none;">
+        <strong>🔔 Chat Notifications</strong>
+        <span>New here? To make sure you receive chat alerts, allow notifications and test them from <b>⚙️ Settings → Notifications</b>.</span>
+        <a href="{{ url_for('settings') }}" style="display:inline-block;margin-top:8px;padding:7px 10px;border-radius:8px;background:#F4A300;color:#fff;text-decoration:none;font-size:11px;font-weight:bold;">OPEN NOTIFICATION SETTINGS →</a>
     </section>
 
     {% with messages=get_flashed_messages() %}
@@ -389,17 +441,17 @@
     {% endwith %}
 
     <div class="stats">
-        <div class="stat">
+        <a class="stat" href="{{ url_for('profile', role='player') }}" aria-label="View players">
             <div class="stat-icon">👤</div>
             <div class="stat-number">{{ players_count }}</div>
-            <div class="stat-label">Players</div>
-        </div>
+            <div class="stat-label">Players<br><span style="font-size:10px;color:#a96d00;">Tap to view</span></div>
+        </a>
 
-        <div class="stat">
+        <a class="stat" href="{{ url_for('profile', role='organizer') }}" aria-label="View organizers">
             <div class="stat-icon">🧑‍💼</div>
             <div class="stat-number">{{ organizers_count }}</div>
-            <div class="stat-label">Organizers</div>
-        </div>
+            <div class="stat-label">Organizers<br><span style="font-size:10px;color:#a96d00;">Tap to view</span></div>
+        </a>
 
         <div class="stat">
             <div class="stat-icon">🏆</div>
