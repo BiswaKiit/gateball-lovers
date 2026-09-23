@@ -1009,7 +1009,11 @@ def android_session_user():
         "logged_in": True,
         "user_id": str(session.get("user_id") or "")
     }
-
+@app.route("/settings")
+@login_required
+def settings():
+    return render_template("settings.html")
+    
 @app.route("/")
 def index():
     if session.get("user_id"):
