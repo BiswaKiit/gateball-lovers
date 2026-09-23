@@ -1009,6 +1009,56 @@ def android_session_user():
         "logged_in": True,
         "user_id": str(session.get("user_id") or "")
     }
+@app.route("/api/android/register-fcm", methods=["POST"])
+@login_required
+def android_register_fcm():
+    if not os.getenv("SUPABASE_SERVICE_ROLE_KEY"):
+        return {
+            "ok": False,
+            "error": "Android notification service is not configured."
+        }, 503
+
+    data = request.get_json(silent=True) or {}
+
+    fcm_token = str(data.get("fcm_token") or "").strip()
+    device_name = str(data.get("device_name") or "").strip()
+
+    if not fcm_token:
+        return {
+            "ok": False,
+            "error": "FCM token is required."
+        }, 400
+
+    row = {
+        "user_id": str(session.get("user_id")),
+        "fcm_token": fcm_token,
+        "device_name": device_name[:100],
+        "platform": "android",
+    }
+
+    try:
+        supabase_request(
+            "POST",
+            "/rest/v1/android_fcm_tokens",
+            access_token=os.getenv("SUPABASE_SERVICE_ROLE_KEY"),
+            params={"on_conflict": "fcm_token"},
+            extra_headers={
+                "Prefer": "resolution=merge-duplicates,return=minimal"
+            },
+            json=row,
+        )
+
+        return {
+            "ok": True
+        }
+
+    except Exception as exc:
+        print("Android FCM token save error:", repr(exc))
+        return {
+            "ok": False,
+            "error": "Could not save Android notification token."
+        }, 500
+
 @app.route("/settings")
 @login_required
 def settings():
