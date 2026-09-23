@@ -9,6 +9,14 @@ from xml.etree import ElementTree as ET
 import requests
 
 try:
+    import firebase_admin
+    from firebase_admin import credentials, messaging
+except Exception:
+    firebase_admin = None
+    credentials = None
+    messaging = None
+
+try:
     from pywebpush import webpush, WebPushException
 except Exception:
     webpush = None
@@ -886,6 +894,80 @@ def send_push_to_user(user_id, title, body, target_url="/chat"):
     return sent
 
 
+
+def _firebase_app():
+    """Initialize Firebase Admin SDK once using Render's secret file."""
+    if firebase_admin is None or credentials is None or messaging is None:
+        print("Firebase Admin unavailable: firebase-admin is not installed")
+        return None
+
+    try:
+        return firebase_admin.get_app()
+    except ValueError:
+        pass
+
+    key_file = os.getenv(
+        "FIREBASE_SERVICE_ACCOUNT_FILE",
+        "/etc/secrets/firebase-service-account.json",
+    )
+
+    if not os.path.exists(key_file):
+        print("Firebase Admin unavailable: service account file not found")
+        return None
+
+    try:
+        cred = credentials.Certificate(key_file)
+        return firebase_admin.initialize_app(cred)
+    except Exception as exc:
+        print("Firebase Admin initialization error:", repr(exc))
+        return None
+
+
+def _android_fcm_rows_for_user(user_id):
+    return supabase_request(
+        "GET",
+        "/rest/v1/android_fcm_tokens",
+        access_token=_service_role_headers(),
+        params={
+            "select": "id,user_id,fcm_token,device_name",
+            "user_id": f"eq.{user_id}",
+        },
+    ) or []
+
+
+def send_fcm_to_user(user_id, title, body, target_url="/chat"):
+    """Send an Android FCM data notification to every registered device for a member."""
+    if not _firebase_app():
+        return 0
+
+    sent = 0
+
+    for row in _android_fcm_rows_for_user(user_id):
+        token = str(row.get("fcm_token") or "").strip()
+        if not token:
+            continue
+
+        try:
+            message = messaging.Message(
+                data={
+                    "title": str(title),
+                    "body": str(body),
+                    "url": str(target_url),
+                },
+                android=messaging.AndroidConfig(priority="high"),
+                token=token,
+            )
+            messaging.send(message)
+            sent += 1
+        except Exception as exc:
+            print(
+                "FCM delivery error:",
+                type(exc).__name__,
+                str(exc)[:300],
+            )
+
+    return sent
+
 def _profile_name(user_id):
     try:
         rows = supabase_request(
@@ -922,33 +1004,92 @@ def push_chat_webhook():
         receiver_id = str(record.get("receiver_id") or "")
         if not receiver_id or receiver_id == sender_id:
             return {"ok": True, "sent": 0}
-        sent = send_push_to_user(
+        title = "Gateball Lovers"
+        notification_body = f"💬 {sender_name}: {body or 'New private chat message'}"
+
+        web_sent = send_push_to_user(
             receiver_id,
-            "Gateball Lovers",
-            f"💬 {sender_name}: {body or 'New private chat message'}",
+            title,
+            notification_body,
             "/chat",
         )
-        return {"ok": True, "sent": sent}
+        fcm_sent = send_fcm_to_user(
+            receiver_id,
+            title,
+            notification_body,
+            "/chat",
+        )
+
+        print(
+            "CHAT PUSH DIAG:",
+            "table=direct_messages",
+            "receiver=" + receiver_id,
+            "web_push_sent=" + str(web_sent),
+            "fcm_sent=" + str(fcm_sent),
+        )
+
+        return {
+            "ok": True,
+            "sent": web_sent + fcm_sent,
+            "web_push_sent": web_sent,
+            "fcm_sent": fcm_sent,
+        }
 
     if table == "community_group_messages":
-        # Notify all subscribed members except the sender.
+        # Notify all subscribed Web Push and Android FCM members except the sender.
         try:
-            rows = supabase_request(
+            web_rows = supabase_request(
                 "GET",
                 "/rest/v1/push_subscriptions",
                 access_token=_service_role_headers(),
                 params={"select": "user_id", "user_id": "neq." + sender_id},
             ) or []
-            user_ids = sorted({str(r.get("user_id")) for r in rows if r.get("user_id")})
-            total = 0
+
+            fcm_rows = supabase_request(
+                "GET",
+                "/rest/v1/android_fcm_tokens",
+                access_token=_service_role_headers(),
+                params={"select": "user_id", "user_id": "neq." + sender_id},
+            ) or []
+
+            user_ids = sorted({
+                str(r.get("user_id"))
+                for r in (web_rows + fcm_rows)
+                if r.get("user_id")
+            })
+
+            web_total = 0
+            fcm_total = 0
+            title = "Gateball Lovers Community"
+            notification_body = f"💬 {sender_name}: {body or 'New community chat message'}"
+
             for uid in user_ids:
-                total += send_push_to_user(
+                web_total += send_push_to_user(
                     uid,
-                    "Gateball Lovers Community",
-                    f"💬 {sender_name}: {body or 'New community chat message'}",
+                    title,
+                    notification_body,
                     "/chat/group",
                 )
-            return {"ok": True, "sent": total}
+                fcm_total += send_fcm_to_user(
+                    uid,
+                    title,
+                    notification_body,
+                    "/chat/group",
+                )
+
+            print(
+                "CHAT PUSH DIAG:",
+                "table=community_group_messages",
+                "web_push_sent=" + str(web_total),
+                "fcm_sent=" + str(fcm_total),
+            )
+
+            return {
+                "ok": True,
+                "sent": web_total + fcm_total,
+                "web_push_sent": web_total,
+                "fcm_sent": fcm_total,
+            }
         except Exception as exc:
             print("Group chat push error:", repr(exc))
             return {"ok": False, "error": "Group push failed."}, 500
