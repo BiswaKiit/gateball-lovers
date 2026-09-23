@@ -1002,7 +1002,13 @@ def session_info():
         "supabase_url": SUPABASE_URL,
         "supabase_key": SUPABASE_PUBLISHABLE_KEY,
     }
-
+@app.route("/api/android/session-user")
+@login_required
+def android_session_user():
+    return {
+        "logged_in": True,
+        "user_id": str(session.get("user_id") or "")
+    }
 
 @app.route("/")
 def index():
@@ -2035,12 +2041,6 @@ def direct_chat(user_id):
     )
 
 
-@app.route("/settings")
-@login_required
-def settings():
-    return render_template("settings.html")
-
-
 # ============================================================
 # PROFILE
 # ============================================================
@@ -2054,13 +2054,6 @@ def profile():
         members = load_members()
     except Exception:
         members = []
-
-    requested_role = str(request.args.get("role") or "").strip().lower()
-    if requested_role in ("player", "organizer"):
-        members = [
-            m for m in members
-            if str(m.get("role") or "").strip().lower() == requested_role
-        ]
 
     return render_template(
         "profile.html",
