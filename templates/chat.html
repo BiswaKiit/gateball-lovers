@@ -55,7 +55,7 @@
   <nav class="bottom">
     <a href="{{ url_for('dashboard') }}">🏠<br>Home</a>
     <a href="{{ url_for('tournaments') }}">🏆<br>Tournaments</a>
-    <a href="{{ url_for('chat') }}" class="active">💬<br>Chat</a>
+    <a href="{{ url_for('chat') }}" class="active">💬<br>Chat <span id="bottomChatBadge" class="badge hidden">0</span></a>
     <a href="{{ url_for('profile') }}">👤<br>Profile</a>
   </nav>
 </div>
@@ -75,6 +75,29 @@ function setBadge(memberId, count){
   const el=document.getElementById('badge-'+memberId); if(!el)return;
   if(count>0){el.textContent=count>99?'99+':count;el.classList.remove('hidden')}else{el.classList.add('hidden')}
 }
+
+function updateBottomChatBadge(){
+  let total=0;
+  document.querySelectorAll('#membersList .badge').forEach(el=>{
+    if(!el.classList.contains('hidden')){
+      const n=parseInt(el.textContent,10);
+      if(Number.isFinite(n)) total+=n;
+    }
+  });
+  const groupUnread = document.getElementById('groupUnread');
+  const hasGroupUnread = !!groupUnread && !!groupUnread.textContent.trim();
+  const el=document.getElementById('bottomChatBadge');
+  if(!el)return;
+  if(total>0){
+    el.textContent=total>99?'99+':total;
+    el.classList.remove('hidden');
+  }else if(hasGroupUnread){
+    el.textContent='•';
+    el.classList.remove('hidden');
+  }else{
+    el.classList.add('hidden');
+  }
+}
 function showChatToast(senderId){
   let toast=document.getElementById('chatToast');
   if(!toast){
@@ -88,7 +111,11 @@ function showChatToast(senderId){
   clearTimeout(window.__glToastTimer);window.__glToastTimer=setTimeout(()=>{if(toast)toast.remove()},5000);
 }
 
-function markChatRead(memberId){ setRead(memberId, Date.now()); setBadge(memberId,0); }
+function markChatRead(memberId){
+  setRead(memberId, Date.now());
+  setBadge(memberId,0);
+  updateBottomChatBadge();
+}
 
 document.querySelectorAll('.chat-btn').forEach(a=>a.addEventListener('click',()=>markChatRead(a.dataset.memberId)));
 
@@ -148,6 +175,7 @@ async function loadUnread(){
       if(t>getRead(sender)) counts[sender]=(counts[sender]||0)+1;
     });
     Object.keys(counts).forEach(id=>setBadge(id,counts[id]));
+    updateBottomChatBadge();
   }catch(e){console.warn('Unread load:',e)}
 }
 
@@ -164,6 +192,7 @@ function subscribeRealtime(){
         const el=document.getElementById('badge-'+sender);
         const old=el&&!el.classList.contains('hidden')?parseInt(el.textContent)||0:0;
         setBadge(sender,old+1);
+        updateBottomChatBadge();
         showChatToast(sender);
       }
     })
@@ -178,12 +207,18 @@ function subscribeRealtime(){
       const last=Number(localStorage.getItem('gl_group_read')||0);
       if(t>last && String((payload.new||{}).sender_id)!==String(MY_ID)){
         const el=document.getElementById('groupUnread'); if(el)el.textContent='🔴 New group message';
+        updateBottomChatBadge();
       }
     })
     .subscribe();
 }
 
-document.querySelector('.group-card .btn').addEventListener('click',()=>localStorage.setItem('gl_group_read',String(Date.now())));
+document.querySelector('.group-card .btn').addEventListener('click',()=>{
+  localStorage.setItem('gl_group_read',String(Date.now()));
+  const el=document.getElementById('groupUnread');
+  if(el)el.textContent='';
+  updateBottomChatBadge();
+});
 init();
 </script>
 </body>
