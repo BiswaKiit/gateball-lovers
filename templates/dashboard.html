@@ -390,11 +390,31 @@
         .nav-icon {
             font-size: 20px;
         }
+
+        .nav-chat-badge {
+            display: inline-flex;
+            min-width: 18px;
+            height: 18px;
+            padding: 0 5px;
+            margin-left: 4px;
+            border-radius: 10px;
+            background: #d64545;
+            color: #fff;
+            align-items: center;
+            justify-content: center;
+            font-size: 9px;
+            font-weight: bold;
+            line-height: 18px;
+        }
+
+        .nav-chat-badge.hidden {
+            display: none;
+        }
     </style>
 
 <link rel="manifest" href="/manifest.json">
 <link rel="stylesheet" href="/static/gateball-theme.css">
-<script defer src="/static/gateball-app.js?v=20260916-settings1"></script>
+<script defer src="/static/gateball-app.js?v=20260926-chatbadge1"></script>
 <meta name="theme-color" content="#F47700">
 </head>
 
@@ -646,7 +666,7 @@
     </a>
     <a href="{{ url_for('chat') }}">
         <span class="nav-icon">💬</span>
-        Chat
+        Chat <span id="dashboardChatBadge" class="nav-chat-badge hidden">0</span>
     </a>
     <a href="{{ url_for('profile') }}">
         <span class="nav-icon">👤</span>
