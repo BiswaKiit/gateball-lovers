@@ -486,11 +486,14 @@
   }
 
 
-  async function loadDashboardChatBadge(sb,myId){
+  async function loadDashboardChatBadge(info,myId){
 
     if(
       location.pathname !== '/dashboard' ||
-      !sb ||
+      !info ||
+      !info.supabase_url ||
+      !info.supabase_key ||
+      !info.access_token ||
       !myId
     ){
       return;
@@ -498,28 +501,55 @@
 
     try{
 
-      var result=
-        await sb
-          .from('direct_messages')
-          .select(
-            'sender_id,receiver_id,created_at'
-          )
-          .eq('receiver_id',myId)
-          .order(
-            'created_at',
-            {
-              ascending:false
-            }
-          )
-          .limit(500);
+      /*
+       * Use Supabase REST directly for the initial Dashboard badge.
+       *
+       * This avoids depending on the Supabase JavaScript CDN library
+       * for the badge calculation, which is especially useful inside
+       * the Android WebView.
+       *
+       * The existing Realtime listener below remains unchanged.
+       */
 
-      if(result.error){
-        throw result.error;
+      var endpoint=
+        info.supabase_url.replace(/\/$/,'')+
+        '/rest/v1/direct_messages'+
+        '?select=sender_id,receiver_id,created_at'+
+        '&receiver_id=eq.'+
+        encodeURIComponent(String(myId))+
+        '&order=created_at.desc'+
+        '&limit=500';
+
+      var response=
+        await fetch(
+          endpoint,
+          {
+            method:'GET',
+            credentials:'omit',
+            cache:'no-store',
+            headers:{
+              'apikey':info.supabase_key,
+              'Authorization':
+                'Bearer '+info.access_token,
+              'Accept':'application/json'
+            }
+          }
+        );
+
+      if(!response.ok){
+        throw new Error(
+          'Chat badge request failed ('+
+          response.status+
+          ')'
+        );
       }
+
+      var data=
+        await response.json();
 
       var total=0;
 
-      (result.data||[]).forEach(function(m){
+      (data||[]).forEach(function(m){
 
         var sender=
           String(m.sender_id||'');
@@ -672,7 +702,7 @@
        * Load unread Chat badge when user is on Home.
        */
       loadDashboardChatBadge(
-        sb,
+        info,
         info.user_id
       );
 
