@@ -4,8 +4,383 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Gateball Lovers - Profile</title>
+
 <style>
-*{box-sizing:border-box}body{margin:0;background:#f4f4f4;font-family:Arial,sans-serif;color:#222}.page{max-width:430px;min-height:100vh;margin:auto;background:#fff;padding-bottom:78px}.header{background:#f4a300;color:#fff;padding:15px 12px;text-align:center;position:sticky;top:0;z-index:5;box-shadow:0 2px 6px #0002}.header h1{margin:0;font-size:21px}.header p{margin:4px 0 0;font-size:12px}.content{padding:14px}.card{background:#fff;border:1px solid #e8e8e8;border-radius:15px;padding:14px;margin-bottom:12px;box-shadow:0 2px 8px #00000012}.center{text-align:center}.profile-photo{width:108px;height:108px;border-radius:50%;object-fit:cover;border:4px solid #f4a300;background:#fff8e8}.avatar{width:108px;height:108px;border-radius:50%;background:#fff3d6;display:flex;align-items:center;justify-content:center;font-size:54px;margin:auto;border:4px solid #f4a300}.profile-name{margin:10px 0 7px;font-size:24px}.badge{display:inline-block;padding:5px 10px;border-radius:20px;background:#fff0c8;color:#9a6500;font-size:12px;font-weight:bold}.info-row{padding:8px 0;border-bottom:1px solid #eee;font-size:15px}.info-row:last-child{border-bottom:0}.info-row b{display:inline-block;min-width:76px}.btn{display:block;width:100%;border:0;border-radius:10px;padding:13px;background:#f4a300;color:#fff;font-weight:bold;cursor:pointer;text-decoration:none;text-align:center;margin:8px 0 12px}.section-title{margin:2px 0 12px;font-size:20px}.member{display:flex;align-items:center;gap:11px;padding:10px 0;border-bottom:1px solid #eee}.member:last-child{border-bottom:0}.member-photo{width:56px;height:56px;border-radius:50%;object-fit:cover;border:2px solid #f4a300;background:#fff8e8;flex:0 0 56px}.member-avatar{width:56px;height:56px;border-radius:50%;background:#fff3d6;display:flex;align-items:center;justify-content:center;font-size:28px;border:2px solid #f4a300;flex:0 0 56px}.member-info{min-width:0;flex:1}.member-name{font-weight:bold;font-size:16px;margin-bottom:4px;overflow-wrap:anywhere}.member-meta{font-size:12px;color:#777}.member-role{display:inline-block;margin-top:5px;padding:3px 7px;border-radius:12px;background:#fff0c8;color:#9a6500;font-size:10px;font-weight:bold}.empty{color:#777;text-align:center;font-size:13px;padding:10px}.creator{margin:20px 0;text-align:center;color:#777;font-size:12px;line-height:1.35}.bottom{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(430px,100%);display:grid;grid-template-columns:repeat(4,1fr);background:#fff;border-top:1px solid #ddd;z-index:10}.bottom a{padding:10px 4px;text-align:center;text-decoration:none;color:#555;font-size:12px}.bottom a.active{color:#d88900;font-weight:bold}
+*{box-sizing:border-box}
+
+body{
+    margin:0;
+    background:#f4f4f4;
+    font-family:Arial,sans-serif;
+    color:#222
+}
+
+.page{
+    max-width:430px;
+    min-height:100vh;
+    margin:auto;
+    background:#fff;
+    padding-bottom:78px
+}
+
+.header{
+    background:#f4a300;
+    color:#fff;
+    padding:15px 12px;
+    text-align:center;
+    position:sticky;
+    top:0;
+    z-index:5;
+    box-shadow:0 2px 6px #0002
+}
+
+.header h1{
+    margin:0;
+    font-size:21px
+}
+
+.header p{
+    margin:4px 0 0;
+    font-size:12px
+}
+
+.content{
+    padding:14px
+}
+
+.card{
+    background:#fff;
+    border:1px solid #e8e8e8;
+    border-radius:15px;
+    padding:14px;
+    margin-bottom:12px;
+    box-shadow:0 2px 8px #00000012
+}
+
+.center{
+    text-align:center
+}
+
+.profile-photo{
+    width:108px;
+    height:108px;
+    border-radius:50%;
+    object-fit:cover;
+    border:4px solid #f4a300;
+    background:#fff8e8
+}
+
+.avatar{
+    width:108px;
+    height:108px;
+    border-radius:50%;
+    background:#fff3d6;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:54px;
+    margin:auto;
+    border:4px solid #f4a300
+}
+
+.profile-name{
+    margin:10px 0 7px;
+    font-size:24px
+}
+
+.badge{
+    display:inline-block;
+    padding:5px 10px;
+    border-radius:20px;
+    background:#fff0c8;
+    color:#9a6500;
+    font-size:12px;
+    font-weight:bold
+}
+
+.info-row{
+    padding:8px 0;
+    border-bottom:1px solid #eee;
+    font-size:15px
+}
+
+.info-row:last-child{
+    border-bottom:0
+}
+
+.info-row b{
+    display:inline-block;
+    min-width:76px
+}
+
+.btn{
+    display:block;
+    width:100%;
+    border:0;
+    border-radius:10px;
+    padding:13px;
+    background:#f4a300;
+    color:#fff;
+    font-weight:bold;
+    cursor:pointer;
+    text-decoration:none;
+    text-align:center;
+    margin:8px 0 12px
+}
+
+.section-title{
+    margin:2px 0 12px;
+    font-size:20px
+}
+
+.member{
+    display:flex;
+    align-items:center;
+    gap:11px;
+    padding:10px 0;
+    border-bottom:1px solid #eee
+}
+
+.member:last-child{
+    border-bottom:0
+}
+
+.member-photo{
+    width:56px;
+    height:56px;
+    border-radius:50%;
+    object-fit:cover;
+    border:2px solid #f4a300;
+    background:#fff8e8;
+    flex:0 0 56px
+}
+
+.member-avatar{
+    width:56px;
+    height:56px;
+    border-radius:50%;
+    background:#fff3d6;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:28px;
+    border:2px solid #f4a300;
+    flex:0 0 56px
+}
+
+.member-info{
+    min-width:0;
+    flex:1
+}
+
+/* Admin member names become clickable */
+.member-name{
+    font-weight:bold;
+    font-size:16px;
+    margin-bottom:4px;
+    overflow-wrap:anywhere
+}
+
+.admin-member-name{
+    color:#b86f00;
+    cursor:pointer;
+    text-decoration:underline;
+    text-decoration-style:dotted;
+    text-underline-offset:3px
+}
+
+.admin-member-name:hover{
+    color:#8f5500
+}
+
+.member-meta{
+    font-size:12px;
+    color:#777
+}
+
+.member-role{
+    display:inline-block;
+    margin-top:5px;
+    padding:3px 7px;
+    border-radius:12px;
+    background:#fff0c8;
+    color:#9a6500;
+    font-size:10px;
+    font-weight:bold
+}
+
+.empty{
+    color:#777;
+    text-align:center;
+    font-size:13px;
+    padding:10px
+}
+
+.creator{
+    margin:20px 0;
+    text-align:center;
+    color:#777;
+    font-size:12px;
+    line-height:1.35
+}
+
+.bottom{
+    position:fixed;
+    bottom:0;
+    left:50%;
+    transform:translateX(-50%);
+    width:min(430px,100%);
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    background:#fff;
+    border-top:1px solid #ddd;
+    z-index:10
+}
+
+.bottom a{
+    padding:10px 4px;
+    text-align:center;
+    text-decoration:none;
+    color:#555;
+    font-size:12px
+}
+
+.bottom a.active{
+    color:#d88900;
+    font-weight:bold
+}
+
+
+/* =========================================================
+   ADMIN MEMBER DETAILS POPUP
+   ========================================================= */
+
+.member-modal{
+    display:none;
+    position:fixed;
+    inset:0;
+    z-index:100;
+    background:rgba(0,0,0,.55);
+    align-items:center;
+    justify-content:center;
+    padding:18px
+}
+
+.member-modal.show{
+    display:flex
+}
+
+.member-modal-box{
+    width:min(400px,100%);
+    max-height:90vh;
+    overflow-y:auto;
+    background:#fff;
+    border-radius:18px;
+    box-shadow:0 10px 35px rgba(0,0,0,.30);
+    position:relative;
+    padding:20px
+}
+
+.member-modal-close{
+    position:absolute;
+    right:12px;
+    top:10px;
+    width:36px;
+    height:36px;
+    border:0;
+    border-radius:50%;
+    background:#f4a300;
+    color:#fff;
+    font-size:22px;
+    font-weight:bold;
+    cursor:pointer;
+    line-height:36px;
+    padding:0
+}
+
+.member-modal-header{
+    text-align:center;
+    padding:5px 30px 15px
+}
+
+.modal-member-photo{
+    width:100px;
+    height:100px;
+    border-radius:50%;
+    object-fit:cover;
+    border:4px solid #f4a300;
+    background:#fff8e8
+}
+
+.modal-member-avatar{
+    width:100px;
+    height:100px;
+    border-radius:50%;
+    background:#fff3d6;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:50px;
+    margin:auto;
+    border:4px solid #f4a300
+}
+
+.member-modal-name{
+    margin:10px 0 6px;
+    font-size:23px
+}
+
+.member-modal-role{
+    display:inline-block;
+    padding:5px 10px;
+    border-radius:20px;
+    background:#fff0c8;
+    color:#9a6500;
+    font-size:12px;
+    font-weight:bold
+}
+
+.modal-info{
+    margin-top:8px;
+    border-top:1px solid #eee
+}
+
+.modal-info-row{
+    padding:11px 4px;
+    border-bottom:1px solid #eee;
+    font-size:14px;
+    word-break:break-word
+}
+
+.modal-info-row:last-child{
+    border-bottom:0
+}
+
+.modal-info-label{
+    display:block;
+    color:#777;
+    font-size:11px;
+    margin-bottom:3px;
+    font-weight:bold
+}
+
+.modal-info-value{
+    color:#222;
+    font-size:15px
+}
+
+.modal-close-button{
+    display:block;
+    width:100%;
+    border:0;
+    border-radius:10px;
+    padding:12px;
+    margin-top:12px;
+    background:#f4a300;
+    color:#fff;
+    font-weight:bold;
+    cursor:pointer
+}
 </style>
 
 <link rel="manifest" href="/manifest.json">
@@ -13,60 +388,413 @@
 <script defer src="/static/gateball-app.js"></script>
 <meta name="theme-color" content="#F47700">
 </head>
+
 <body>
+
 <div class="page">
-<div class="header"><h1>👤 Profile</h1><p>Gateball Community</p></div>
+
+<div class="header">
+    <h1>👤 Profile</h1>
+    <p>Gateball Community</p>
+</div>
+
 <div class="content">
 
 <div class="card center">
+
 {% if profile.photo_url %}
 <img src="{{ profile.photo_url }}" class="profile-photo" alt="Profile photo">
 {% else %}
 <div class="avatar">👤</div>
 {% endif %}
-<h2 class="profile-name">{{ profile.full_name or 'Gateball User' }}</h2>
-<span class="badge">{{ profile.role or 'Player' }}</span>
+
+<h2 class="profile-name">
+    {{ profile.full_name or 'Gateball User' }}
+</h2>
+
+<span class="badge">
+    {{ profile.role or 'Player' }}
+</span>
+
 </div>
 
+
 <div class="card">
-<div class="info-row"><b>Country:</b> {{ profile.country or 'Not specified' }}</div>
-<div class="info-row"><b>Email:</b> {{ profile.email or 'Not specified' }}</div>
-<div class="info-row"><b>Phone:</b> {{ profile.phone or 'Not specified' }}</div>
+
+<div class="info-row">
+    <b>Country:</b>
+    {{ profile.country or 'Not specified' }}
 </div>
 
-<a class="btn" href="{{ url_for('edit_profile') }}">✏ EDIT MY PROFILE</a>
+<div class="info-row">
+    <b>Email:</b>
+    {{ profile.email or 'Not specified' }}
+</div>
+
+<div class="info-row">
+    <b>Phone:</b>
+    {{ profile.phone or 'Not specified' }}
+</div>
+
+</div>
+
+
+<a class="btn" href="{{ url_for('edit_profile') }}">
+    ✏ EDIT MY PROFILE
+</a>
+
 
 <div class="card">
-<h3 class="section-title">Community Members</h3>
+
+<h3 class="section-title">
+    Community Members
+</h3>
+
 {% if members %}
+
 {% for member in members %}
+
 <div class="member">
+
 {% if member.photo_url %}
-<img src="{{ member.photo_url }}" class="member-photo" alt="Profile photo">
+
+<img
+    src="{{ member.photo_url }}"
+    class="member-photo"
+    alt="Profile photo"
+>
+
 {% else %}
-<div class="member-avatar">👤</div>
-{% endif %}
-<div class="member-info">
-<div class="member-name">{{ member.full_name or 'Gateball User' }}</div>
-<div class="member-meta">🌍 {{ member.country or 'Country not specified' }}</div>
-<span class="member-role">{{ member.role or 'Player' }}</span>
-</div>
-</div>
-{% endfor %}
-{% else %}
-<div class="empty">No community members found.</div>
-{% endif %}
+
+<div class="member-avatar">
+    👤
 </div>
 
-<div class="creator">Gateball Lovers<br>Created by Biswa Ranjan Mishra<br>Connect. Compete. Celebrate.</div>
+{% endif %}
+
+
+<div class="member-info">
+
+{% if profile.role == 'Admin' %}
+
+<!-- ADMIN ONLY: clickable member name -->
+
+<div
+    class="member-name admin-member-name"
+    role="button"
+    tabindex="0"
+    onclick="openMemberDetails(this)"
+    onkeydown="if(event.key==='Enter' || event.key===' ') { event.preventDefault(); openMemberDetails(this); }"
+
+    data-name="{{ member.full_name or 'Gateball User' }}"
+    data-role="{{ member.role or 'Player' }}"
+    data-country="{{ member.country or 'Country not specified' }}"
+    data-email="{{ member.email or 'Not specified' }}"
+    data-phone="{{ member.phone or 'Not specified' }}"
+    data-photo="{{ member.photo_url or '' }}"
+>
+    {{ member.full_name or 'Gateball User' }}
 </div>
+
+{% else %}
+
+<!-- NORMAL MEMBERS: name is not clickable -->
+
+<div class="member-name">
+    {{ member.full_name or 'Gateball User' }}
+</div>
+
+{% endif %}
+
+
+<div class="member-meta">
+    🌍 {{ member.country or 'Country not specified' }}
+</div>
+
+<span class="member-role">
+    {{ member.role or 'Player' }}
+</span>
+
+</div>
+
+</div>
+
+{% endfor %}
+
+{% else %}
+
+<div class="empty">
+    No community members found.
+</div>
+
+{% endif %}
+
+</div>
+
+
+<div class="creator">
+    Gateball Lovers<br>
+    Created by Biswa Ranjan Mishra<br>
+    Connect. Compete. Celebrate.
+</div>
+
+</div>
+
+
+<!-- =========================================================
+     ADMIN MEMBER DETAILS MODAL
+     ========================================================= -->
+
+<div
+    id="memberDetailsModal"
+    class="member-modal"
+    onclick="closeMemberDetailsOnBackground(event)"
+>
+
+<div class="member-modal-box">
+
+<button
+    type="button"
+    class="member-modal-close"
+    onclick="closeMemberDetails()"
+    aria-label="Close"
+>
+    ×
+</button>
+
+
+<div class="member-modal-header">
+
+<div id="modalMemberPhotoContainer">
+    <div class="modal-member-avatar">👤</div>
+</div>
+
+<h2
+    id="modalMemberName"
+    class="member-modal-name"
+>
+    Member
+</h2>
+
+<span
+    id="modalMemberRole"
+    class="member-modal-role"
+>
+    Player
+</span>
+
+</div>
+
+
+<div class="modal-info">
+
+<div class="modal-info-row">
+    <span class="modal-info-label">🌍 COUNTRY</span>
+    <span
+        id="modalMemberCountry"
+        class="modal-info-value"
+    >
+        Not specified
+    </span>
+</div>
+
+
+<div class="modal-info-row">
+    <span class="modal-info-label">📧 EMAIL</span>
+    <span
+        id="modalMemberEmail"
+        class="modal-info-value"
+    >
+        Not specified
+    </span>
+</div>
+
+
+<div class="modal-info-row">
+    <span class="modal-info-label">📱 MOBILE NUMBER</span>
+    <span
+        id="modalMemberPhone"
+        class="modal-info-value"
+    >
+        Not specified
+    </span>
+</div>
+
+</div>
+
+
+<button
+    type="button"
+    class="modal-close-button"
+    onclick="closeMemberDetails()"
+>
+    CLOSE
+</button>
+
+</div>
+
+</div>
+
 
 <nav class="bottom">
-<a href="{{ url_for('dashboard') }}">🏠<br>Home</a>
-<a href="{{ url_for('tournaments') }}">🏆<br>Tournaments</a>
-<a href="{{ url_for('chat') }}">💬<br>Chat</a>
-<a href="{{ url_for('profile') }}" class="active">👤<br>Profile</a>
+
+<a href="{{ url_for('dashboard') }}">
+    🏠<br>Home
+</a>
+
+<a href="{{ url_for('tournaments') }}">
+    🏆<br>Tournaments
+</a>
+
+<a href="{{ url_for('chat') }}">
+    💬<br>Chat
+</a>
+
+<a href="{{ url_for('profile') }}" class="active">
+    👤<br>Profile
+</a>
+
 </nav>
+
 </div>
+
+
+<script>
+
+/* =========================================================
+   ADMIN MEMBER DETAILS POPUP
+   ========================================================= */
+
+function openMemberDetails(element) {
+
+    var modal = document.getElementById("memberDetailsModal");
+
+    if (!modal || !element) {
+        return;
+    }
+
+    var name =
+        element.getAttribute("data-name") ||
+        "Gateball User";
+
+    var role =
+        element.getAttribute("data-role") ||
+        "Player";
+
+    var country =
+        element.getAttribute("data-country") ||
+        "Not specified";
+
+    var email =
+        element.getAttribute("data-email") ||
+        "Not specified";
+
+    var phone =
+        element.getAttribute("data-phone") ||
+        "Not specified";
+
+    var photo =
+        element.getAttribute("data-photo") ||
+        "";
+
+
+    document.getElementById("modalMemberName").textContent =
+        name;
+
+    document.getElementById("modalMemberRole").textContent =
+        role;
+
+    document.getElementById("modalMemberCountry").textContent =
+        country;
+
+    document.getElementById("modalMemberEmail").textContent =
+        email;
+
+    document.getElementById("modalMemberPhone").textContent =
+        phone;
+
+
+    var photoContainer =
+        document.getElementById(
+            "modalMemberPhotoContainer"
+        );
+
+    if (photo) {
+
+        photoContainer.innerHTML =
+            '<img src="' +
+            escapeHtmlAttribute(photo) +
+            '" class="modal-member-photo" alt="Profile photo">';
+
+    } else {
+
+        photoContainer.innerHTML =
+            '<div class="modal-member-avatar">👤</div>';
+
+    }
+
+
+    modal.classList.add("show");
+
+    document.body.style.overflow = "hidden";
+}
+
+
+function closeMemberDetails() {
+
+    var modal =
+        document.getElementById("memberDetailsModal");
+
+    if (!modal) {
+        return;
+    }
+
+    modal.classList.remove("show");
+
+    document.body.style.overflow = "";
+}
+
+
+function closeMemberDetailsOnBackground(event) {
+
+    if (
+        event.target &&
+        event.target.id === "memberDetailsModal"
+    ) {
+        closeMemberDetails();
+    }
+}
+
+
+/*
+ * Small helper for safely placing the photo URL
+ * into the dynamically created image element.
+ */
+function escapeHtmlAttribute(value) {
+
+    return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/"/g, "&quot;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/'/g, "&#039;");
+}
+
+
+/*
+ * Android / browser back button:
+ * close the popup first instead of leaving
+ * the Profile page.
+ */
+window.addEventListener("keydown", function(event) {
+
+    if (event.key === "Escape") {
+        closeMemberDetails();
+    }
+
+});
+
+</script>
+
 </body>
 </html>
