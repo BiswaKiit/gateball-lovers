@@ -1560,7 +1560,7 @@ def tournaments():
         )
 
 
-@app.route("/tournaments/<int:tournament_id>/join", methods=["GET", "POST"])@app.route("/tournaments/<int:tournament_id>/join", methods=["GET", "POST"])
+@app.route("/tournaments/<int:tournament_id>/join", methods=["GET", "POST"])
 @login_required
 def join_tournament(tournament_id):
     profile = current_profile()
