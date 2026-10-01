@@ -405,12 +405,22 @@ def normalize_tournament(row):
 
     row["display_start"] = format_date(start)
     row["display_end"] = format_date(end)
-
-    # The old Python app calculated status from the dates.
     row["calculated_status"] = calculated_status(start, end)
-
-    # Keep database status synchronized when possible.
     row["status"] = row["calculated_status"]
+
+    # New multi-category field. Existing tournaments are already migrated
+    # from event_type into event_types in Supabase.
+    event_types = row.get("event_types") or []
+    if isinstance(event_types, str):
+        event_types = [event_types]
+
+    valid = [x for x in event_types if x in ("Classic", "Triple", "Double")]
+    if not valid and row.get("event_type") in ("Classic", "Triple", "Double"):
+        valid = [row["event_type"]]
+
+    row["event_types"] = valid
+    # Keep the old field available for compatibility with older code/templates.
+    row["event_type"] = valid[0] if valid else (row.get("event_type") or "Classic")
 
     return row
 
@@ -421,7 +431,7 @@ def load_tournaments(include_results=True):
         "/rest/v1/tournaments",
         params={
             "select": (
-                "id,name,venue,event_type,start_date,end_date,"
+                "id,name,venue,event_type,event_types,start_date,end_date,"
                 "organizer_id,organizer_name,status,created_at,country,"
                 "description,updated_at,live_link"
             ),
@@ -440,34 +450,20 @@ def load_tournaments(include_results=True):
         "GET",
         "/rest/v1/tournament_results",
         params={
-            "select": (
-                "id,tournament_id,position,team_name,score,"
-                "created_at,category"
-            ),
+            "select": "id,tournament_id,position,team_name,score,created_at,category",
             "tournament_id": "in.(" + ",".join(ids) + ")",
             "order": "position.asc",
         },
     ) or []
 
     results_by_tournament = {}
-
     for item in result_rows:
         tid = item.get("tournament_id")
         category = item.get("category") or "Classic"
-
-        results_by_tournament.setdefault(
-            tid,
-            {}
-        ).setdefault(
-            category,
-            []
-        ).append(item)
+        results_by_tournament.setdefault(tid, {}).setdefault(category, []).append(item)
 
     for tournament in tournaments:
-        tournament["results"] = results_by_tournament.get(
-            tournament["id"],
-            {}
-        )
+        tournament["results"] = results_by_tournament.get(tournament["id"], {})
 
     return tournaments
 
@@ -485,7 +481,26 @@ def load_members():
     return rows
 
 
+def joined_player_categories(tournament_id, player_id):
+    rows = supabase_request(
+        "GET",
+        "/rest/v1/tournament_players",
+        params={
+            "select": "category",
+            "tournament_id": f"eq.{tournament_id}",
+            "player_id": f"eq.{player_id}",
+        },
+    ) or []
+
+    return {
+        str(row.get("category"))
+        for row in rows
+        if row.get("category")
+    }
+
+
 def joined_player_ids(tournament_id):
+    # Kept for compatibility with any other existing code.
     rows = supabase_request(
         "GET",
         "/rest/v1/tournament_players",
@@ -502,45 +517,8 @@ def joined_player_ids(tournament_id):
     }
 
 
-def tournament_counts():
-    rows = supabase_request(
-        "GET",
-        "/rest/v1/tournaments",
-        params={
-            "select": "id,start_date,end_date,live_link",
-            "order": "start_date.asc",
-        },
-    ) or []
-
-    today = date.today()
-
-    upcoming = 0
-    ongoing = 0
-    live = 0
-
-    for row in rows:
-        status = calculated_status(
-            row.get("start_date"),
-            row.get("end_date")
-        )
-
-        if status == "Upcoming":
-            upcoming += 1
-        elif status == "Ongoing":
-            ongoing += 1
-
-        if row.get("live_link"):
-            live += 1
-
-    return {
-        "total": len(rows),
-        "upcoming": upcoming,
-        "ongoing": ongoing,
-        "live": live,
-    }
-
-
 # ============================================================
+# GATEBALL NEWS# ============================================================
 # GATEBALL NEWS
 # ============================================================
 
@@ -1557,10 +1535,12 @@ def tournaments():
         user_id = session.get("user_id")
 
         for tournament in selected:
-            tournament["joined"] = (
-                user_id in joined_player_ids(tournament["id"])
-                if user_id else False
+            tournament["joined_categories"] = (
+                sorted(joined_player_categories(tournament["id"], user_id))
+                if user_id and profile and profile.get("role") == "Player"
+                else []
             )
+            tournament["joined"] = bool(tournament["joined_categories"])
             tournament["can_manage"] = can_manage_tournament(tournament, profile)
 
         return render_template(
@@ -1580,7 +1560,7 @@ def tournaments():
         )
 
 
-@app.route("/tournaments/<int:tournament_id>/join", methods=["GET", "POST"])
+@app.route("/tournaments/<int:tournament_id>/join", methods=["GET", "POST"])@app.route("/tournaments/<int:tournament_id>/join", methods=["GET", "POST"])
 @login_required
 def join_tournament(tournament_id):
     profile = current_profile()
@@ -1592,12 +1572,17 @@ def join_tournament(tournament_id):
         flash("Only Players can join tournaments.")
         return redirect(url_for("tournaments"))
 
+    category = (request.args.get("category") or request.form.get("category") or "").strip()
+    if category not in ("Classic", "Triple", "Double"):
+        flash("Please select a valid tournament category.")
+        return redirect(url_for("tournaments", status="Upcoming"))
+
     try:
         tournament_rows = supabase_request(
             "GET",
             "/rest/v1/tournaments",
             params={
-                "select": "id,start_date,end_date,status",
+                "select": "id,start_date,end_date,status,event_type,event_types",
                 "id": f"eq.{tournament_id}",
                 "limit": "1",
             },
@@ -1607,21 +1592,22 @@ def join_tournament(tournament_id):
             flash("Tournament not found.")
             return redirect(url_for("tournaments"))
 
-        tournament = tournament_rows[0]
-        status = calculated_status(
-            tournament.get("start_date"),
-            tournament.get("end_date")
-        )
+        tournament = normalize_tournament(tournament_rows[0])
+        status = calculated_status(tournament.get("start_date"), tournament.get("end_date"))
 
         if status != "Upcoming":
             flash("You can join only an Upcoming tournament.")
             return redirect(url_for("tournaments"))
 
-        existing = joined_player_ids(tournament_id)
+        if category not in tournament.get("event_types", []):
+            flash("That category is not available for this tournament.")
+            return redirect(url_for("tournaments", status="Upcoming"))
 
-        if str(profile["id"]) in existing:
-            flash("You have already joined this tournament.")
-            return redirect(url_for("tournaments"))
+        existing_categories = joined_player_categories(tournament_id, profile["id"])
+
+        if category in existing_categories:
+            flash(f"You have already joined the {category} category.")
+            return redirect(url_for("tournaments", status="Upcoming"))
 
         supabase_request(
             "POST",
@@ -1629,23 +1615,24 @@ def join_tournament(tournament_id):
             json={
                 "tournament_id": tournament_id,
                 "player_id": profile["id"],
+                "category": category,
             },
         )
 
-        flash("✓ Tournament joined successfully.")
+        flash(f"✓ You joined the {category} category successfully.")
 
     except Exception as exc:
         print("Join tournament error:", repr(exc))
-
-        if "duplicate" in str(exc).lower():
-            flash("You have already joined this tournament.")
+        if "duplicate" in str(exc).lower() or "tournament_players_tournament_player_category_key" in str(exc):
+            flash(f"You have already joined the {category} category.")
         else:
-            flash("Could not join the tournament.")
+            flash("Could not join the tournament category.")
 
-    return redirect(url_for("tournaments"))
+    return redirect(url_for("tournaments", status="Upcoming"))
 
 
 # ============================================================
+# TOURNAMENT ADD / EDIT / RESULT# ============================================================
 # TOURNAMENT ADD / EDIT / RESULT
 # These use simple server-rendered forms so the main app
 # remains Python/Flask-first.
@@ -1697,6 +1684,13 @@ def tournament_form_html(t=None):
         f'<option value="{country}">' for country in COUNTRIES
     )
 
+    selected_types = t.get("event_types") or []
+    if isinstance(selected_types, str):
+        selected_types = [selected_types]
+
+    def checked(category):
+        return "checked" if category in selected_types else ""
+
     return f"""
 <label>Tournament Name</label>
 <input name="name" required value="{t.get('name','')}">
@@ -1711,12 +1705,19 @@ def tournament_form_html(t=None):
 <input name="country" list="country-options" autocomplete="off" required value="{t.get('country','')}" placeholder="Type to search country">
 <datalist id="country-options">{country_options}</datalist>
 
-<label>Event Type</label>
-<select name="event_type" required>
-<option {'selected' if t.get('event_type') == 'Classic' else ''}>Classic</option>
-<option {'selected' if t.get('event_type') == 'Triple' else ''}>Triple</option>
-<option {'selected' if t.get('event_type') == 'Double' else ''}>Double</option>
-</select>
+<label>Categories / Event Types</label>
+<div style="margin-top:7px;padding:11px;border:1px solid #ddd;border-radius:10px;background:#fff8e8">
+<label style="display:flex;align-items:center;gap:8px;margin:0 0 9px;font-weight:normal;color:#222">
+<input type="checkbox" name="event_types" value="Classic" {checked('Classic')} style="width:auto;margin:0"> Classic
+</label>
+<label style="display:flex;align-items:center;gap:8px;margin:0 0 9px;font-weight:normal;color:#222">
+<input type="checkbox" name="event_types" value="Triple" {checked('Triple')} style="width:auto;margin:0"> Triple
+</label>
+<label style="display:flex;align-items:center;gap:8px;margin:0;font-weight:normal;color:#222">
+<input type="checkbox" name="event_types" value="Double" {checked('Double')} style="width:auto;margin:0"> Double
+</label>
+<div style="font-size:11px;color:#777;margin-top:8px">Select one or more categories.</div>
+</div>
 
 <label>Start Date</label>
 <input type="date" name="start_date" required value="{t.get('start_date','')}">
@@ -1729,15 +1730,19 @@ def tournament_form_html(t=None):
 """
 
 
-@app.route("/tournaments/add", methods=["GET", "POST"])
+@app.route("/tournaments/add", methods=["GET", "POST"])@app.route("/tournaments/add", methods=["GET", "POST"])
 @manager_required
 def add_tournament():
     if request.method == "POST":
+        event_types = request.form.getlist("event_types")
+        event_types = [x for x in event_types if x in ("Classic", "Triple", "Double")]
+
         data = {
             "name": request.form.get("name", "").strip(),
             "venue": request.form.get("venue", "").strip(),
             "country": request.form.get("country", "").strip(),
-            "event_type": request.form.get("event_type", "Classic"),
+            "event_type": event_types[0] if event_types else "",
+            "event_types": event_types,
             "start_date": request.form.get("start_date", ""),
             "end_date": request.form.get("end_date", ""),
             "organizer_id": session.get("user_id"),
@@ -1746,8 +1751,8 @@ def add_tournament():
             "live_link": "",
         }
 
-        if data["event_type"] not in ("Classic", "Triple", "Double"):
-            flash("Please select a valid Event Type.")
+        if not event_types:
+            flash("Please select at least one Event Type.")
             return redirect(url_for("add_tournament"))
 
         if not data["name"] or not data["venue"] or not data["country"] or not data["organizer_name"]:
@@ -1777,13 +1782,13 @@ def add_tournament():
     return render_template("simple_form.html", title="Add Tournament", form_html=tournament_form_html())
 
 
-@app.route("/tournaments/<int:tournament_id>/edit", methods=["GET", "POST"])
+@app.route("/tournaments/<int:tournament_id>/edit", methods=["GET", "POST"])@app.route("/tournaments/<int:tournament_id>/edit", methods=["GET", "POST"])
 @manager_required
 def edit_tournament(tournament_id):
     rows = supabase_request(
         "GET", "/rest/v1/tournaments",
         params={
-            "select": "id,name,venue,country,event_type,start_date,end_date,organizer_id,organizer_name,description,live_link",
+            "select": "id,name,venue,country,event_type,event_types,start_date,end_date,organizer_id,organizer_name,description,live_link",
             "id": f"eq.{tournament_id}", "limit": "1",
         },
     ) or []
@@ -1792,18 +1797,58 @@ def edit_tournament(tournament_id):
         flash("Tournament not found.")
         return redirect(url_for("tournaments", status="Upcoming"))
 
-    tournament = rows[0]
+    tournament = normalize_tournament(rows[0])
     profile = current_profile()
     if not can_manage_tournament(tournament, profile):
         flash("Only the Admin or the Organizer who created this tournament can edit it.")
         return redirect(url_for("tournaments", status="Upcoming"))
 
     if request.method == "POST":
+        event_types = request.form.getlist("event_types")
+        event_types = [x for x in event_types if x in ("Classic", "Triple", "Double")]
+
+        if not event_types:
+            flash("Please select at least one Event Type.")
+            return redirect(url_for("edit_tournament", tournament_id=tournament_id))
+
+        # Do not silently orphan registrations or results if an organizer
+        # removes a category that is already in use.
+        used_player_rows = supabase_request(
+            "GET",
+            "/rest/v1/tournament_players",
+            params={
+                "select": "category",
+                "tournament_id": f"eq.{tournament_id}",
+            },
+        ) or []
+        used_result_rows = supabase_request(
+            "GET",
+            "/rest/v1/tournament_results",
+            params={
+                "select": "category",
+                "tournament_id": f"eq.{tournament_id}",
+            },
+        ) or []
+        used_categories = {
+            str(row.get("category"))
+            for row in (used_player_rows + used_result_rows)
+            if row.get("category")
+        }
+        removed_in_use = sorted(used_categories - set(event_types))
+        if removed_in_use:
+            flash(
+                "Cannot remove category already in use: "
+                + ", ".join(removed_in_use)
+                + ". Keep it selected when editing this tournament."
+            )
+            return redirect(url_for("edit_tournament", tournament_id=tournament_id))
+
         data = {
             "name": request.form.get("name", "").strip(),
             "venue": request.form.get("venue", "").strip(),
             "country": request.form.get("country", "").strip(),
-            "event_type": request.form.get("event_type", "Classic"),
+            "event_type": event_types[0],
+            "event_types": event_types,
             "start_date": request.form.get("start_date", ""),
             "end_date": request.form.get("end_date", ""),
             "organizer_name": request.form.get("organizer_name", "").strip(),
@@ -1832,7 +1877,7 @@ def edit_tournament(tournament_id):
     return render_template("simple_form.html", title="Edit Tournament", form_html=tournament_form_html(tournament))
 
 
-@app.route("/tournaments/<int:tournament_id>/delete", methods=["POST"])
+@app.route("/tournaments/<int:tournament_id>/delete", methods=["POST"])@app.route("/tournaments/<int:tournament_id>/delete", methods=["POST"])
 @manager_required
 def delete_tournament(tournament_id):
     try:
@@ -1845,7 +1890,39 @@ def delete_tournament(tournament_id):
             flash("You do not have permission to delete this tournament.")
             return redirect(url_for("tournaments", status="Upcoming"))
 
-        supabase_request("DELETE", "/rest/v1/tournaments", params={"id": f"eq.{tournament_id}"})
+        # The normal member JWT can update tournaments, but Supabase RLS may
+        # not allow a direct DELETE for the member role.  The server is already
+        # enforcing Admin/Organizer permission above, so use the server-side
+        # service-role key for the actual delete.  The service-role key never
+        # reaches the browser.
+        service_role_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+        if not service_role_key:
+            raise RuntimeError("Server delete permission is not configured.")
+
+        supabase_request(
+            "DELETE",
+            "/rest/v1/tournaments",
+            access_token=service_role_key,
+            params={"id": f"eq.{tournament_id}"},
+            extra_headers={"Prefer": "return=minimal"},
+        )
+
+        # Confirm that the tournament is actually gone.  This prevents a
+        # misleading success message if Supabase ever returns without deleting.
+        remaining = supabase_request(
+            "GET",
+            "/rest/v1/tournaments",
+            access_token=service_role_key,
+            params={
+                "select": "id",
+                "id": f"eq.{tournament_id}",
+                "limit": "1",
+            },
+        ) or []
+
+        if remaining:
+            raise RuntimeError("Supabase did not delete the tournament.")
+
         flash("✓ Tournament deleted successfully.")
     except Exception as exc:
         print("Delete tournament error:", repr(exc))
@@ -1905,13 +1982,25 @@ def add_result():
     requested_id = request.args.get("tournament_id") or request.form.get("tournament_id")
     selected = next((t for t in tournaments_data if str(t.get("id")) == str(requested_id)), None)
 
+    requested_category = (request.args.get("category") or request.form.get("category") or "").strip()
+    if selected:
+        categories = selected.get("event_types") or [selected.get("event_type") or "Classic"]
+    else:
+        categories = []
+
+    category = requested_category if requested_category in categories else (categories[0] if categories else "")
+
     if request.method == "POST":
         if not selected:
             flash("Please select a finished tournament.")
             return redirect(url_for("add_result"))
 
+        category = (request.form.get("category") or "").strip()
+        if category not in categories:
+            flash("Please select a valid category for this tournament.")
+            return redirect(url_for("add_result", tournament_id=selected["id"]))
+
         tournament_id = selected["id"]
-        category = selected.get("event_type") or "Classic"
         rows = []
 
         for position in range(1, 5):
@@ -1919,7 +2008,7 @@ def add_result():
             score = request.form.get(f"score_{position}", "").strip()
             if not team or not score:
                 flash("Please enter team name and score for all 4 places.")
-                return redirect(url_for("add_result", tournament_id=tournament_id))
+                return redirect(url_for("add_result", tournament_id=tournament_id, category=category))
             rows.append({
                 "tournament_id": int(tournament_id),
                 "category": category,
@@ -1929,19 +2018,24 @@ def add_result():
             })
 
         try:
-            # One tournament has one event_type in the current schema.
-            # Replace all of its existing results so ADD/EDIT works cleanly
-            # with the existing unique (tournament_id, position) constraint.
-            supabase_request("DELETE", "/rest/v1/tournament_results", params={"tournament_id": f"eq.{tournament_id}"})
+            # Replace only this category's results. Other categories remain untouched.
+            supabase_request(
+                "DELETE",
+                "/rest/v1/tournament_results",
+                params={
+                    "tournament_id": f"eq.{tournament_id}",
+                    "category": f"eq.{category}",
+                },
+            )
             supabase_request("POST", "/rest/v1/tournament_results", json=rows)
-            flash("✓ Tournament result saved successfully.")
+            flash(f"✓ {category} result saved successfully.")
             return redirect(url_for("tournaments", status="Finished"))
         except Exception as exc:
             print("Result save error:", repr(exc))
             flash("Could not save result: " + str(exc)[:180])
 
     if selected:
-        existing = selected.get("results", {}).get(selected.get("event_type") or "Classic", [])
+        existing = selected.get("results", {}).get(category, [])
         existing_map = {int(r.get("position")): r for r in existing}
     else:
         existing_map = {}
@@ -1951,6 +2045,11 @@ def add_result():
         for t in tournaments_data
     )
 
+    category_options = "".join(
+        f'<option value="{c}" {"selected" if c == category else ""}>{c}</option>'
+        for c in categories
+    )
+
     form_html = f"""
 <label>Tournament</label>
 <select name="tournament_id" required onchange="if(this.value){{window.location='?tournament_id='+this.value;}}">
@@ -1958,7 +2057,9 @@ def add_result():
 </select>
 
 <label>Category / Event Type</label>
-<input value="{selected.get('event_type') if selected else ''}" readonly>
+<select name="category" required onchange="if(document.querySelector('[name=tournament_id]').value){{window.location='?tournament_id='+document.querySelector('[name=tournament_id]').value+'&category='+encodeURIComponent(this.value);}}">
+{category_options}
+</select>
 """
 
     for position, label in ((1, "1st Place"), (2, "2nd Place"), (3, "3rd Place"), (4, "4th Place")):
@@ -1975,6 +2076,7 @@ def add_result():
 
 
 # ============================================================
+# MESSAGE BOARD# ============================================================
 # MESSAGE BOARD
 # ============================================================
 
