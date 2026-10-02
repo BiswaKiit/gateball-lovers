@@ -1730,7 +1730,7 @@ def tournament_form_html(t=None):
 """
 
 
-@app.route("/tournaments/add", methods=["GET", "POST"])@app.route("/tournaments/add", methods=["GET", "POST"])
+@app.route("/tournaments/add", methods=["GET", "POST"])
 @manager_required
 def add_tournament():
     if request.method == "POST":
@@ -1782,7 +1782,7 @@ def add_tournament():
     return render_template("simple_form.html", title="Add Tournament", form_html=tournament_form_html())
 
 
-@app.route("/tournaments/<int:tournament_id>/edit", methods=["GET", "POST"])@app.route("/tournaments/<int:tournament_id>/edit", methods=["GET", "POST"])
+@app.route("/tournaments/<int:tournament_id>/edit", methods=["GET", "POST"])
 @manager_required
 def edit_tournament(tournament_id):
     rows = supabase_request(
@@ -1877,7 +1877,7 @@ def edit_tournament(tournament_id):
     return render_template("simple_form.html", title="Edit Tournament", form_html=tournament_form_html(tournament))
 
 
-@app.route("/tournaments/<int:tournament_id>/delete", methods=["POST"])@app.route("/tournaments/<int:tournament_id>/delete", methods=["POST"])
+@app.route("/tournaments/<int:tournament_id>/delete", methods=["POST"])
 @manager_required
 def delete_tournament(tournament_id):
     try:
