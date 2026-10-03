@@ -1260,6 +1260,72 @@ def login():
     return render_template("login.html")
 
 
+@app.route("/forgot-password", methods=["GET", "POST"])
+def forgot_password():
+    if request.method == "POST":
+        email = request.form.get("email", "").strip()
+
+        if not valid_email(email):
+            return render_template(
+                "forgot_password.html",
+                message="Please enter a valid email address.",
+                success=False
+            )
+
+        try:
+            reset_url = url_for(
+                "update_password",
+                _external=True
+            )
+
+            response = requests.post(
+                f"{SUPABASE_URL}/auth/v1/recover",
+                params={"redirect_to": reset_url},
+                headers={
+                    "apikey": SUPABASE_PUBLISHABLE_KEY,
+                    "Content-Type": "application/json",
+                },
+                json={"email": email},
+                timeout=20
+            )
+
+            if response.status_code >= 400:
+                print("Password recovery error:", response.status_code, response.text)
+                message = (
+                    "Could not send the reset email. Please try again later."
+                )
+                return render_template(
+                    "forgot_password.html",
+                    message=message,
+                    success=False
+                )
+
+            return render_template(
+                "forgot_password.html",
+                message=(
+                    "If an account exists for that email, "
+                    "a password-reset email will be sent. "
+                    "Please check your inbox and spam folder."
+                ),
+                success=True
+            )
+
+        except Exception as exc:
+            print("Password recovery error:", repr(exc))
+            return render_template(
+                "forgot_password.html",
+                message="Something went wrong. Please try again later.",
+                success=False
+            )
+
+    return render_template("forgot_password.html")
+
+
+@app.route("/update-password")
+def update_password():
+    return render_template("update_password.html")
+
+
 @app.route("/signup", methods=["GET", "POST"])
 def signup():
     if request.method == "POST":
