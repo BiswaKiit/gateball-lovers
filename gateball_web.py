@@ -1321,7 +1321,7 @@ def forgot_password():
     return render_template("forgot_password.html")
 
 
-```python
+
 @app.route("/update-password")
 def update_password():
     return render_template(
@@ -1329,7 +1329,7 @@ def update_password():
         supabase_url=SUPABASE_URL,
         supabase_key=SUPABASE_PUBLISHABLE_KEY
     )
-```
+
 
 
 
