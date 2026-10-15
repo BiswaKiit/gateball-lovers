@@ -989,14 +989,15 @@ def push_chat_webhook():
             receiver_id,
             title,
             notification_body,
-            "/chat",
+            f"/chat/direct/{sender_id}",
         )
         fcm_sent = send_fcm_to_user(
             receiver_id,
             title,
             notification_body,
-            "/chat",
+            f"/chat/direct/{sender_id}",
         )
+
 
         print(
             "CHAT PUSH DIAG:",
